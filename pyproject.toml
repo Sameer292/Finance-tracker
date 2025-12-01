@@ -1,0 +1,15 @@
+[project]
+name = "financetracker"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "argon2-cffi>=25.1.0",
+    "bcrypt>=5.0.0",
+    "fastapi>=0.122.0",
+    "passlib>=1.7.4",
+    "pyjwt>=2.10.1",
+    "sqlalchemy>=2.0.44",
+    "uvicorn>=0.38.0",
+]
