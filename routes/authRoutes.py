@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Query, Body, Request, Response
+from fastapi import APIRouter, Depends, status, HTTPException, Body, Request
 from db.database import get_db
 from db import models
 from sqlalchemy.orm import Session
-from schemas.schemas import Create_User, Login, Me
+from schemas.schemas import CreateUser, Login, UserResponse, AllUsers
 from utils import utils
-from jwt import encode, decode, DecodeError
+from jwt import encode
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 router = APIRouter()
@@ -13,7 +13,7 @@ security = HTTPBearer()
 
 
 @router.post("/register", status_code=status.HTTP_200_OK)
-def register(credentials: Create_User = Body(...), db: Session = Depends(get_db)):
+def register(credentials: CreateUser = Body(...), db: Session = Depends(get_db)):
     hashed_password = utils.hash_password(credentials.password)
     new_user = models.User(
         name=credentials.name, email=credentials.email, password=hashed_password
@@ -33,22 +33,38 @@ def login(credentials: Login = Body(...), db: Session = Depends(get_db)):
     if not utils.verify_password(credentials.password, user.password):
         raise HTTPException(status_code=401, detail="Incorrect password")
 
-    access_token = encode(key=SECRET_KEY, algorithm="HS256", payload={"id": user.id})
+    access_token = encode({"id": user.id}, SECRET_KEY, "HS256")
     return {
         "id": user.id,
         "access_token": access_token,
     }
 
 
-@router.post("/isCorrect")
-def isCorrect(accessCode: str = Query(...), db: Session = Depends(get_db)):
-    try:
-        decode(accessCode, SECRET_KEY, algorithms=["HS256"])
-        return {"message": "Access Granted"}
-    except DecodeError:
-        raise HTTPException(status_code=401, detail="Access Denied")
+@router.get("/me", response_model=UserResponse, status_code=status.HTTP_200_OK)
+def get_user( request: Request, credentials:HTTPAuthorizationCredentials = Depends(security)):
+    if not request.state.user:
+        print(request)
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
-
-@router.get('/me', response_model=Me, status_code=status.HTTP_200_OK)
-def get_user(request: Request, response:Response, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     return request.state.user
+
+
+@router.get("/users", response_model=AllUsers, status_code=status.HTTP_200_OK)
+def get_AllUsers(
+    db: Session = Depends(get_db),
+):
+    users = db.query(models.User).all()
+    return {"users": users}
+
+@router.post('/seed_me', status_code=status.HTTP_200_OK)
+def seed_me( db:Session = Depends(get_db) ):
+    password = "iamsameer"
+    hashed_password = utils.hash_password(password)
+    new_user = models.User(
+        name="sameer", email="iamsameer@gmail.com", password=hashed_password
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    access_token = encode({"id": new_user.id}, SECRET_KEY, "HS256")
+    return {"id": new_user.id, "message": "User created successfully", "accessToken": access_token }

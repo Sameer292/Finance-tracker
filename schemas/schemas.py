@@ -3,10 +3,10 @@ from enum import Enum
 
 
 class TransactionType(str, Enum):
-    INCOME = 'income'
-    EXPENSES = 'expense'
+    INCOME = "income"
+    EXPENSE = "expense"
 
-class Create_User(BaseModel):
+class CreateUser(BaseModel):
     name: str
     email: str
     password: str
@@ -16,13 +16,33 @@ class Login(BaseModel):
     password: str
 
 class Transaction(BaseModel):
-    type: TransactionType
+    transaction_type: TransactionType
     amount: int
+    note: str | None = None
+    category_id: int | None = None
 
-class Me(BaseModel):
+class UserResponse(BaseModel):
     id: int
     email: str
     name: str
+    current_balance: int
 
-    class config:
-        orm_mode = True
+    class Config:
+        from_attributes = True 
+
+
+class AllUsers(BaseModel):
+    users: list[UserResponse]
+
+
+class Category(BaseModel):
+    name: str
+    category_type: TransactionType
+
+class CategoryResponse(BaseModel):
+    id: int
+    name: str
+    category_type: TransactionType
+
+class AllCategories(BaseModel):
+    categories: list[CategoryResponse]

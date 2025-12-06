@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import authRoutes, transactions
+from routes import authRoutes, transactions, categoryRoutes
 from db.database import engine
 import db.models
 from middlewares.authMiddleWare import AuthMiddleware
@@ -13,6 +13,7 @@ app = FastAPI(
 )
 
 app.add_middleware(AuthMiddleware)
+auth_scheme = HTTPBearer()
 
 @app.on_event("startup")
 async def startup():
@@ -24,5 +25,4 @@ def root():
 
 app.include_router(authRoutes.router)
 app.include_router(transactions.router)
-
-auth_scheme = HTTPBearer()
+app.include_router(categoryRoutes.router)
