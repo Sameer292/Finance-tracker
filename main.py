@@ -23,6 +23,10 @@ async def startup():
 def root():
     return {"message": "Working"}
 
+@app.get("/category/{id}/transactions")
+def category_transactions(id):
+    return {'list of transactions'}
+
 app.include_router(authRoutes.router)
 app.include_router(transactions.router)
 app.include_router(categoryRoutes.router)
