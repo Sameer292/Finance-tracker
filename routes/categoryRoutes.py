@@ -43,17 +43,20 @@ def get_categories(
     return {"categories": categories}
 
 @router.get("/category/{id}", status_code=status.HTTP_200_OK)
-def getCategory(id = int, db: Session = Depends(get_db)):
+def getCategory(id: int, db: Session = Depends(get_db)):
     category = db.query(models.Category).filter(models.Category.id == id).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     return category
 
 @router.delete("/category/{id}", status_code=status.HTTP_200_OK)
-def deleteCategory(id:int, db: Session = Depends(get_db)):
+def deleteCategory(id: int, db: Session = Depends(get_db)):
     category_to_delete = db.query(models.Category).filter(models.Category.id == id).first()
+
+    if not category_to_delete:
+        raise HTTPException(status_code=404, detail="Category not found")
+
     db.delete(category_to_delete)
     db.commit()
-    return {
-        "message": "Category deleted successfully",
-    }
+
+    return {"message": "Category deleted successfully"}
