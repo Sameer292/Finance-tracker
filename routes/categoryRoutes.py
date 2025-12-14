@@ -42,6 +42,10 @@ def get_categories(
         raise HTTPException(status_code=404, detail="Categories not found")
     return {"categories": categories}
 
+@router.get("/category/{id}/transactions")
+def category_transactions(id):
+    return {'list of transactions'}
+
 @router.get("/category/{id}", status_code=status.HTTP_200_OK)
 def getCategory(id: int, db: Session = Depends(get_db)):
     category = db.query(models.Category).filter(models.Category.id == id).first()
@@ -58,5 +62,7 @@ def deleteCategory(id: int, db: Session = Depends(get_db)):
 
     db.delete(category_to_delete)
     db.commit()
+    return {
+        "message": "Category deleted successfully",
+    }
 
-    return {"message": "Category deleted successfully"}
