@@ -43,16 +43,15 @@ def get_categories(
         raise HTTPException(status_code=404, detail="Categories not found")
     return {"categories": categories}
 
-@router.get("/category/{id}/transactions", status_code=status.HTTP_200_OK)
-def category_transactions(id:int, db: Session = Depends(get_db)):
+
+@router.get("/category/{id}/transactions",response_model=list[Transaction], status_code=status.HTTP_200_OK)
+def category_transactions(id:int, db: Session = Depends(get_db), ):
     transactions = db.query(models.Transaction).filter(models.Transaction.category_id == id).all()
-    categories = db.query(models.Category).filter(models.Category.id == id).first()
-    if transactions:
+    if transactions: 
         return transactions
     else:
-        return {
-            "message": "No transactions found"
-        }
+        raise HTTPException(status_code=404, detail="Category not found")
+
 
 @router.get("/category/{id}", status_code=status.HTTP_200_OK)
 def getCategory(id: int, db: Session = Depends(get_db)):
