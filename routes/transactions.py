@@ -47,9 +47,6 @@ def get_transactions(request:Request, db:Session=Depends(get_db), credentials: H
     }
 
 
-
-
-
 @router.get("/transactions/recent", response_model=List[TransactionResponse])
 def get_recent_transactions(
     request: Request,
@@ -58,9 +55,7 @@ def get_recent_transactions(
 ):
     # Get user ID from request state
     user_id = getattr(request.state.user, "id", None)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="User not authenticated")
-
+    
     # Last 3 days
     start_date = datetime.utcnow() - timedelta(days=3)
 
@@ -74,13 +69,11 @@ def get_recent_transactions(
         .order_by(models.Transaction.created_date.desc())
         .all()
     )
-
+     
+    if not transactions:
+        raise HTTPException(status_code=404, detail="No recent transactions found")
+   
     return transactions 
-
-
-
-
-
 
 @router.get('/transactions/{id}')
 def get_transaction(request:Request, id:int, db:Session=Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -116,15 +109,6 @@ def delete_all_transactions(request:Request, db:Session=Depends(get_db), credent
         "message": "All transactions deleted"
     }
 
-
-
-
-  
-
-
-
-
-
 @router.put('/transactions/{id}')
 def update_transaction(request:Request, id:int, transaction:Transaction, db:Session=Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     queried_transaction = db.query(models.Transaction).filter(models.Transaction.id == id).first()
@@ -142,13 +126,6 @@ def update_transaction(request:Request, id:int, transaction:Transaction, db:Sess
     return{
         "message": "Transaction updated"
     }
-
-
-
-
-
-
-
 
 @router.get("/transactions/last/{days}")
 def get_transactions_last_days(
