@@ -50,8 +50,6 @@ def category_transactions(id:int, db: Session = Depends(get_db)):
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     transactions = db.query(models.Transaction).filter(models.Transaction.category_id == id).all()
-    if not transactions:
-     return {'transactions': []}
     return {'transactions': transactions }
 
 
