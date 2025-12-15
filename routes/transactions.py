@@ -153,9 +153,3 @@ def get_transactions_last_days(
     }
 
 
-
-
-
-
-
-
