@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from schemas.schemas import Category, AllCategories
 from db import models
-from schemas.schemas import Transaction
+from schemas.schemas import Transaction, CategoryTransactionResponse
 
 router = APIRouter()
 security = HTTPBearer()
@@ -44,13 +44,12 @@ def get_categories(
     return {"categories": categories}
 
 
-@router.get("/category/{id}/transactions",response_model=list[Transaction], status_code=status.HTTP_200_OK)
-def category_transactions(id:int, db: Session = Depends(get_db), ):
+@router.get("/category/{id}/transactions",response_model=CategoryTransactionResponse, status_code=status.HTTP_200_OK)
+def category_transactions(id:int, db: Session = Depends(get_db)):
     transactions = db.query(models.Transaction).filter(models.Transaction.category_id == id).all()
-    if transactions: 
-        return transactions
-    else:
+    if not transactions: 
         raise HTTPException(status_code=404, detail="Category not found")
+    return {'transactions': transactions}
 
 
 @router.get("/category/{id}", status_code=status.HTTP_200_OK)
