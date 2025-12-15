@@ -53,7 +53,7 @@ class AllCategories(BaseModel):
 
 class TransactionResponse(BaseModel):
     id: int
-    transaction_type: Enum  
+    transaction_type: TransactionType 
     amount: int
     note: Optional[str] = None
     user_id: int

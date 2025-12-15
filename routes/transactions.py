@@ -47,7 +47,7 @@ def get_transactions(request:Request, db:Session=Depends(get_db), credentials: H
     }
 
 
-@router.get("/transactions/recent", response_model=List[TransactionResponse])
+@router.get("/transactions/recent", response_model=RecentTransactionsResponse)
 def get_recent_transactions(
     request: Request,
     db: Session = Depends(get_db),
@@ -71,9 +71,18 @@ def get_recent_transactions(
     )
      
     if not transactions:
-        raise HTTPException(status_code=404, detail="No recent transactions found")
+        return {
+            "type": "No recent transactions found",
+             "days": 3,
+            "transactions": []
+        }
+       
    
-    return transactions 
+    return {
+        "type": "Recent transactions retrieved successfully",
+        "days": 3,
+        "transactions": transactions
+    }
 
 @router.get('/transactions/{id}')
 def get_transaction(request:Request, id:int, db:Session=Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
