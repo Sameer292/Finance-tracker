@@ -46,3 +46,6 @@ class CategoryResponse(BaseModel):
 
 class AllCategories(BaseModel):
     categories: list[CategoryResponse]
+
+class CategoryTransactionResponse(BaseModel):
+    transactions: list[Transaction]
