@@ -47,8 +47,11 @@ def get_categories(
 @router.get("/category/{id}/transactions",response_model=CategoryTransactionResponse, status_code=status.HTTP_200_OK)
 def category_transactions(id:int, db: Session = Depends(get_db)):
     transactions = db.query(models.Transaction).filter(models.Transaction.category_id == id).all()
-    if not transactions: 
+    category = db.query(models.Category).filter(models.Category.id == id).first()
+    if not category:
         raise HTTPException(status_code=404, detail="Category not found")
+    if not transactions: 
+        raise HTTPException(status_code=404, detail="Transaction not found")
     return {'transactions': transactions}
 
 
