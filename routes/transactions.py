@@ -1,9 +1,13 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
-from schemas.schemas import Transaction
+from schemas.schemas import Transaction, RecentTransactionsResponse
 from db import models
 from db.database import get_db
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from datetime import datetime, timedelta
+from typing import List
+from schemas.schemas import TransactionResponse
+
 
 router = APIRouter()
 security = HTTPBearer()
@@ -48,6 +52,43 @@ def get_transactions(request:Request, db:Session=Depends(get_db), credentials: H
         "transactions": transactions
     }
 
+
+@router.get("/transactions/recent", response_model=RecentTransactionsResponse)
+def get_recent_transactions(
+    request: Request,
+    db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Get user ID from request state
+    user_id = getattr(request.state.user, "id", None)
+    
+    # Last 3 days
+    start_date = datetime.utcnow() - timedelta(days=3)
+
+    # Query transactions of this user in last 3 days
+    transactions = (
+        db.query(models.Transaction)
+        .filter(
+            models.Transaction.user_id == user_id,
+            models.Transaction.created_date >= start_date
+        )
+        .order_by(models.Transaction.created_date.desc())
+        .all()
+    )
+     
+    if not transactions:
+        return {
+            "type": "No recent transactions found",
+             "days": 3,
+            "transactions": []
+        }
+       
+   
+    return {
+        "type": "Recent transactions retrieved successfully",
+        "days": 3,
+        "transactions": transactions
+    }
 
 @router.get('/transactions/{id}')
 def get_transaction(request:Request, id:int, db:Session=Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -100,3 +141,30 @@ def update_transaction(request:Request, id:int, transaction:Transaction, db:Sess
     return{
         "message": "Transaction updated"
     }
+
+@router.get("/transactions/last/{days}")
+def get_transactions_last_days(
+    days: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    user_id = request.state.user.id
+
+    start_date = datetime.utcnow() - timedelta(days=days)
+
+    transactions = (
+        db.query(models.Transaction)
+        .filter(
+            models.Transaction.user_id == user_id,
+            models.Transaction.created_date >= start_date
+        )
+        .all()
+    )
+
+    return {
+        "days": days,
+        "transactions": transactions
+    }
+
+

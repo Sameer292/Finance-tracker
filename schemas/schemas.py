@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator
 from enum import Enum
-from datetime import datetime, date
+from datetime import datetime,date
+from typing import Optional, List
 
 
 class TransactionType(str, Enum):
@@ -64,5 +65,26 @@ class CategoryResponse(BaseModel):
 class AllCategories(BaseModel):
     categories: list[CategoryResponse]
 
+
+
+
+class TransactionResponse(BaseModel):
+    id: int
+    transaction_type: TransactionType 
+    amount: int
+    note: Optional[str] = None
+    user_id: int
+    category_id: Optional[int] = None
+    created_date: datetime
+
+    class Config:
+        from_attributes = True
+
+class RecentTransactionsResponse(BaseModel):
+    type: str
+    days: int
+    transactions: List[TransactionResponse]
+
 class CategoryTransactionResponse(BaseModel):
     transactions: list[Transaction]
+
