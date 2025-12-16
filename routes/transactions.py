@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
-from schemas.schemas import Transaction
+from schemas.schemas import Transaction,RecentTransactionsResponse
 from db import models
 from db.database import get_db
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -148,3 +148,4 @@ def update_transaction(request:Request, id:int, transaction:Transaction, db:Sess
     return{
         "message": "Transaction updated"
     }
+

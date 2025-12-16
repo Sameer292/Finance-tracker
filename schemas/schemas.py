@@ -89,6 +89,7 @@ class AllCategories(BaseModel):
     categories: list[CategoryResponse]
 
 class CategoryTransactionResponse(BaseModel):
+
     transactions: list[Transaction]
 
 
@@ -98,3 +99,26 @@ class RefreshTokenRequest(BaseModel):
 class AccessTokenResponse(BaseModel):
     id: int
     access_token: str
+
+
+    transactions: list[Transaction]
+
+    transactions: list[Transaction]
+
+class TransactionResponse(BaseModel):
+    id: int
+    transaction_type: TransactionType 
+    amount: int
+    note: Optional[str] = None
+
+    category_id: Optional[int] = None
+   
+
+    class Config:
+        from_attributes = True
+
+class RecentTransactionsResponse(BaseModel):
+    type: str
+    days: int
+    transactions: List[TransactionResponse]
+
