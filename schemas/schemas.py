@@ -1,6 +1,25 @@
 from pydantic import BaseModel, field_validator
 from enum import Enum
-from datetime import datetime, date
+from datetime import date,datetime
+from typing import List,Optional
+
+class TransactionResponse(BaseModel):
+    id: int
+    transaction_type: str
+    amount: int
+    note: Optional[str] = None
+    created_date: datetime
+    updated_date: datetime
+   
+
+    class Config:
+       from_attribute = True
+        
+class FilteredTransactionResponse(BaseModel):
+ 
+    start_date:Optional[date] =None
+    end_date:Optional[date] =None
+    transactions:List[TransactionResponse]
 
 class TransactionType(str, Enum):
     INCOME = "income"

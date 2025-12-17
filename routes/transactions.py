@@ -4,9 +4,35 @@ from schemas.schemas import Transaction
 from db import models
 from db.database import get_db
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from typing import Optional
+from datetime import date,time,datetime
+from schemas.schemas import FilteredTransactionResponse, TransactionResponse
 
 router = APIRouter()
 security = HTTPBearer()
+
+@router.get('/transactions',response_model=FilteredTransactionResponse)
+def get_transactions(request:Request,start_date: Optional[date] =None,
+                     end_date: Optional[date] =None,
+                     db :Session=Depends(get_db),
+                     credentials: HTTPAuthorizationCredentials = Depends(security)):
+                     user_id =request.state.user.id
+                     query= db.query(models.Transaction).filter(models.Transaction.user_id==user_id)
+                     if start_date:
+                          start_dt=datetime.combine(start_date,time.min)  #00:00:00
+                          query=query.filter(models.Transaction.created_date>=start_dt)
+                     if end_date:
+                          end_dt =datetime.combine(end_date,time.max)  #23:59:59
+                          query= query.filter(models.Transaction.created_date<=end_dt)
+
+                     transactions=query.order_by(models.Transaction.created_date.desc()).all()  
+                   
+                     return{
+                    #    "type":"date_filtered",
+                       "start_date":start_date,
+                       "end_date":end_date,
+                       "transactions":transactions 
+                   }
 
 @router.post('/transactions')
 def post_transactions(request:Request, transaction:Transaction, db:Session=Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -37,15 +63,6 @@ def post_transactions(request:Request, transaction:Transaction, db:Session=Depen
         'id': new_transaction.id,
         'message': "New transaction added",
         'userStatus': 'new balance: ' + str(user.current_balance)
-    }
-
-
-@router.get('/transactions')
-def get_transactions(request:Request, db:Session=Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
-    userId = request.state.user.id
-    transactions = db.query(models.Transaction).filter(models.Transaction.user_id == userId).all()
-    return{
-        "transactions": transactions
     }
 
 
