@@ -11,28 +11,45 @@ from schemas.schemas import FilteredTransactionResponse, TransactionResponse
 router = APIRouter()
 security = HTTPBearer()
 
-@router.get('/transactions',response_model=FilteredTransactionResponse)
-def get_transactions(request:Request,start_date: Optional[date] =None,
-                     end_date: Optional[date] =None,
-                     db :Session=Depends(get_db),
-                     credentials: HTTPAuthorizationCredentials = Depends(security)):
-                     user_id =request.state.user.id
-                     query= db.query(models.Transaction).filter(models.Transaction.user_id==user_id)
-                     if start_date:
-                          start_dt=datetime.combine(start_date,time.min)  #00:00:00
-                          query=query.filter(models.Transaction.created_date>=start_dt)
-                     if end_date:
-                          end_dt =datetime.combine(end_date,time.max)  #23:59:59
-                          query= query.filter(models.Transaction.created_date<=end_dt)
+@router.get("/transactions", response_model=FilteredTransactionResponse)
+def get_transactions(
+    request: Request,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+   
+        if start_date and end_date and start_date > end_date:
+            raise HTTPException(
+                status_code=400,
+                detail="start date cannot be after end date"
+            )
+        user_id = request.state.user.id
 
-                     transactions=query.order_by(models.Transaction.created_date.desc()).all()  
-                   
-                     return{
-                    #    "type":"date_filtered",
-                       "start_date":start_date,
-                       "end_date":end_date,
-                       "transactions":transactions 
-                   }
+        query = db.query(models.Transaction).filter(
+            models.Transaction.user_id == user_id
+        )
+        if start_date:
+            start_dt = datetime.combine(start_date, time.min) 
+            query = query.filter(
+                models.Transaction.created_date >= start_dt
+            )
+        if end_date:
+            end_dt = datetime.combine(end_date, time.max)  
+            query = query.filter(
+                models.Transaction.created_date <= end_dt
+            )
+            transactions = (
+            query.order_by(models.Transaction.created_date.desc())
+            .all()
+        )
+        return {
+            "start_date": start_date,
+            "end_date": end_date,
+            "transactions": transactions
+        }
+   
 
 @router.post('/transactions')
 def post_transactions(request:Request, transaction:Transaction, db:Session=Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
