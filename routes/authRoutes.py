@@ -6,10 +6,14 @@ from schemas.schemas import CreateUser, Login, UserResponse, AllUsers
 from utils import utils
 from jwt import encode
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from utils.utils import create_access_token, decode_token
+from datetime import timedelta
+
 
 router = APIRouter()
 SECRET_KEY = "honey_bunny"
 security = HTTPBearer()
+REFRESH_TOKEN_EXPIRY = 15
 
 
 @router.post("/register", status_code=status.HTTP_200_OK)
@@ -33,10 +37,21 @@ def login(credentials: Login = Body(...), db: Session = Depends(get_db)):
     if not utils.verify_password(credentials.password, user.password):
         raise HTTPException(status_code=401, detail="Incorrect password")
 
-    access_token = encode({"id": user.id}, SECRET_KEY, "HS256")
+    access_token = create_access_token(
+        user_data={
+            "id": user.id,
+            "email": user.email,
+        }
+    )
+    refresh_token = create_access_token(
+        user_data={"id": user.id, "email": user.email},
+        refresh=True,
+        expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
+    )
     return {
         "id": user.id,
         "access_token": access_token,
+        "refresh_token": refresh_token,
     }
 
 

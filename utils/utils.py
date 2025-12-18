@@ -3,6 +3,7 @@ from datetime import timedelta, datetime
 from src.settings import settings
 import jwt
 import uuid
+import logging
 
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -33,10 +34,14 @@ def create_access_token(
     return token
 
 
-def decode_token(token: str):
-    token_data = jwt.decode(
+def decode_token(token: str) -> dict:
+    try:
+        token_data = jwt.decode(
         jwt=token, 
         key=settings.JWT_SECRET, 
         algorithms=[settings.JWT_ALOGRITHM]
     )
-  
+        return token_data
+    except jwt.PyJWTError as e: 
+        logging.exception("Error decoding token")
+        return None
