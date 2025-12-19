@@ -88,3 +88,6 @@ class RecentTransactionsResponse(BaseModel):
 class CategoryTransactionResponse(BaseModel):
     transactions: list[Transaction]
 
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str

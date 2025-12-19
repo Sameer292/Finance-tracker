@@ -1,13 +1,12 @@
 from passlib.context import CryptContext
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from src.settings import settings
+from fastapi import HTTPException, status
 import jwt
 import uuid
-import logging
-
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+ACCESS_TOKEN_EXPIRE_MINUTES = 1
 
 
 def hash_password(password: str):
@@ -19,29 +18,37 @@ def verify_password(plain_password, hashed_password):
 
 
 def create_access_token(
-    user_data: dict, expiry: timedelta = None, refresh: bool = False
-):
-    payload = {}
-    payload["user"] = user_data
-    payload["exp"] = datetime.now() + (
-        expiry if expiry is not None else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    user_id: int,
+    refresh: bool = False,
+    expiry: timedelta = None,
+) -> str:
+    payload = {
+        "sub": str(user_id),
+        "exp": datetime.now(timezone.utc)
+        + (expiry if expiry else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)),
+        "jti": str(uuid.uuid4()),
+        "refresh": refresh,
+    }
+    return jwt.encode(
+        payload,
+        settings.JWT_SECRET,
+        algorithm=settings.JWT_ALGORITHM,
     )
-    payload["jti"] = str(uuid.uuid4())
-    payload["refresh"] = refresh
-    token = jwt.encode(
-        payload=payload, key=settings.JWT_SECRET, algorithm=settings.JWT_ALOGRITHM
-    )
-    return token
 
 
 def decode_token(token: str) -> dict:
     try:
         token_data = jwt.decode(
-        jwt=token, 
-        key=settings.JWT_SECRET, 
-        algorithms=[settings.JWT_ALOGRITHM]
-    )
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
         return token_data
-    except jwt.PyJWTError as e: 
-        logging.exception("Error decoding token")
-        return None
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired",
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
