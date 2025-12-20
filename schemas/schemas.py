@@ -1,9 +1,6 @@
 from pydantic import BaseModel, field_validator
 from enum import Enum
 from datetime import datetime, date
-from datetime import datetime,date
-from typing import Optional, List
-
 
 class TransactionType(str, Enum):
     INCOME = "income"
