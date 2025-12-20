@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from schemas.schemas import Category, AllCategories
 from db import models
+from schemas.schemas import Transaction, CategoryTransactionResponse
 
 router = APIRouter()
 security = HTTPBearer()
@@ -44,6 +45,16 @@ def get_categories(
         raise HTTPException(status_code=404, detail="Categories not found")
     return {"categories": categories}
 
+
+@router.get("/category/{id}/transactions",response_model=CategoryTransactionResponse, status_code=status.HTTP_200_OK)
+def category_transactions(id:int, db: Session = Depends(get_db)):
+    category = db.query(models.Category).filter(models.Category.id == id).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    transactions = db.query(models.Transaction).filter(models.Transaction.category_id == id).all()
+    return {'transactions': transactions }
+
+
 @router.get("/category/{id}", status_code=status.HTTP_200_OK)
 def getCategory(id: int, db: Session = Depends(get_db)):
     category = db.query(models.Category).filter(models.Category.id == id).first()
@@ -60,5 +71,7 @@ def deleteCategory(id: int, db: Session = Depends(get_db)):
 
     db.delete(category_to_delete)
     db.commit()
+    return {
+        "message": "Category deleted successfully",
+    }
 
-    return {"message": "Category deleted successfully"}
