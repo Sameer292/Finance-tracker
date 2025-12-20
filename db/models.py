@@ -29,8 +29,11 @@ class Transaction(Base):
     transaction_type = Column(Enum(TransactionType))
     amount = Column(Integer)
     note = Column(String, nullable=True)
+    transaction_date = Column(DateTime, nullable=True, default=datetime.datetime.utcnow)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_date = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_date = Column(
+        DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow
+    )
 
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="transactions")
@@ -43,8 +46,9 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
-    category_type = Column(Enum(TransactionType))
-    
+    color = Column(String)
+    icon = Column(String)
+
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="categories")
     transactions = relationship("Transaction", back_populates="category")

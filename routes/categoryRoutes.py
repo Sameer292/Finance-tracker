@@ -20,7 +20,9 @@ def add_category(
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    new_category = models.Category(name=category.name, category_type=category.category_type, user_id=user.id)
+    new_category = models.Category(
+        name=category.name, user_id=user.id, color=category.color, icon=category.icon
+    )
     db.add(new_category)
     db.commit()
     db.refresh(new_category)
