@@ -8,6 +8,7 @@ from schemas.schemas import (
     UserResponse,
     AllUsers,
     RefreshTokenRequest,
+    AccessTokenResponse,
 )
 from jwt import encode
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -57,7 +58,9 @@ def login(credentials: Login = Body(...), db: Session = Depends(get_db)):
     }
 
 
-@router.post("/refresh", status_code=status.HTTP_200_OK)
+@router.post(
+    "/refresh", status_code=status.HTTP_200_OK, response_model=AccessTokenResponse
+)
 def get_new_access_token(request: RefreshTokenRequest, db: Session = Depends(get_db)):
     payload = decode_token(request.refresh_token)
     if not payload.get("refresh"):
@@ -74,7 +77,7 @@ def get_new_access_token(request: RefreshTokenRequest, db: Session = Depends(get
         )
 
     access_token = create_access_token(user_id=user.id)
-    return {"access_token": access_token}
+    return {"id": user.id, "access_token": access_token}
 
 
 @router.get("/me", response_model=UserResponse, status_code=status.HTTP_200_OK)

@@ -54,3 +54,7 @@ class CategoryTransactionResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+class AccessTokenResponse(BaseModel):
+    id: int
+    access_token: str

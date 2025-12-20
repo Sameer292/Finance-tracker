@@ -11,3 +11,4 @@ wheels/
 financeTracker.db
 
 .env
+refresh_tokens.json
