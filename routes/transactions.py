@@ -7,6 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
 from datetime import date,time,datetime,timezone,timedelta
 from schemas.schemas import FilteredTransactionResponse, TransactionResponse
+from utils import utils
 
 router = APIRouter()
 security = HTTPBearer()
@@ -20,42 +21,39 @@ def get_transactions(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     
-    def ms_to_utc_nepal(ms: int) -> datetime:
-       
-        nepal_time= datetime.fromtimestamp(ms / 1000)
-        utc_time = nepal_time.replace(microsecond=0, tzinfo=timezone.utc)
-        return utc_time
     
     if start_date_ms is not None and start_date_ms < 0:
         raise HTTPException(status_code=400, detail="start_date_ms must be positive")
     if end_date_ms is not None and end_date_ms < 0:
         raise HTTPException(status_code=400, detail="end_date_ms must be positive")
     
-    start_date = ms_to_utc_nepal(start_date_ms) if start_date_ms is not None else None
-    end_date = ms_to_utc_nepal(end_date_ms) if end_date_ms is not None else None
+    start_date = utils.ms_to_utc_nepal(start_date_ms) if start_date_ms is not None else None
+    end_date = utils.ms_to_utc_nepal(end_date_ms) if end_date_ms is not None else None
 
  # it must be exactly here for the reason of original values
-    if start_date and end_date and start_date.date() > end_date.date():
+    if start_date and end_date and start_date > end_date:
         raise HTTPException(status_code=400, detail="start_date cannot be greater than end_date")
 
     user_id = request.state.user.id
     query = db.query(models.Transaction).filter(models.Transaction.user_id == user_id)
 
-    if start_date:
+    if start_date :
         start_date =start_date.replace(hour=0, minute=0, second=0)
-        query= db.query(models.Transaction).filter(models.Transaction.created_date >= start_date)
+        query = query.filter(models.Transaction.created_date >= start_date)
+
 
     if end_date:
         end_date = end_date.replace(hour=0, minute=0, second=0)
         end_date  +=timedelta(days=1)
-        query=db.query(models.Transaction).filter(models.Transaction.created_date < end_date)
+        query=query.filter(models.Transaction.created_date < end_date)
    
-    if start_date:
-        query = query.filter(models.Transaction.created_date >= start_date)
-    if end_date:
-        query = query.filter(models.Transaction.created_date <  end_date)
 
     transactions = query.order_by(models.Transaction.created_date.desc()).all()
+    
+    if start_date_ms is None and end_date_ms is None:
+        return {
+            'transactions': transactions
+        }
     return {
         'start_date_ms': start_date_ms,
         'end_date_ms': end_date_ms,
