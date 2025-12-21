@@ -16,8 +16,11 @@ def get_user_from_token(token: str, db: Session):
             return None
     except HTTPException:
         return None
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    return user
+    try:
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        return user
+    except Exception:
+        return None
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
