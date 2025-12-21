@@ -43,6 +43,7 @@ def get_categories(
     categories = db.query(models.Category).filter(models.Category.user_id == user_id).all()
     if not categories:
         raise HTTPException(status_code=404, detail="Categories not found")
+    
     return {"categories": categories}
 
 

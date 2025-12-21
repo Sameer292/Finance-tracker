@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime
 from sqlalchemy.orm import declarative_base, relationship
 import enum
 import datetime
+from sqlalchemy.sql import func
 
 Base = declarative_base()
 
@@ -29,11 +30,16 @@ class Transaction(Base):
     transaction_type = Column(Enum(TransactionType))
     amount = Column(Integer)
     note = Column(String, nullable=True)
+
     transaction_date = Column(DateTime, nullable=True, default=datetime.datetime.utcnow)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     updated_date = Column(
         DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow
     )
+
+    created_date = Column(DateTime(timezone=True),server_default=func.now())
+    updated_date = Column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now())
+
 
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="transactions")
