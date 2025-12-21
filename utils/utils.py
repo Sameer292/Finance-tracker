@@ -2,11 +2,12 @@ from passlib.context import CryptContext
 from datetime import timedelta, datetime, timezone
 from src.settings import settings
 from fastapi import HTTPException, status
+from src.settings import settings
 import jwt
 import uuid
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-ACCESS_TOKEN_EXPIRE_MINUTES = 1
+
 
 
 def hash_password(password: str):
@@ -25,7 +26,7 @@ def create_access_token(
     payload = {
         "sub": str(user_id),
         "exp": datetime.now(timezone.utc)
-        + (expiry if expiry else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)),
+        + (expiry if expiry else timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)),
         "jti": str(uuid.uuid4()),
         "refresh": refresh,
     }

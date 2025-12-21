@@ -14,12 +14,12 @@ from jwt import encode
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from utils.utils import create_access_token, decode_token
 from datetime import timedelta
-from utils.token_store import save_refresh_token
 from utils import utils
+from src.settings import settings
 
 router = APIRouter()
 security = HTTPBearer()
-REFRESH_TOKEN_EXPIRY = 15
+
 
 
 @router.post("/register", status_code=status.HTTP_200_OK)
@@ -47,10 +47,9 @@ def login(credentials: Login = Body(...), db: Session = Depends(get_db)):
     refresh_token = create_access_token(
         user_id=user.id,
         refresh=True,
-        expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
+        expiry=timedelta(days=settings.REFRESH_TOKEN_EXPIRY_DAYS),
     )
 
-    save_refresh_token(user.id, refresh_token)  # Save refresh token in JSON
     return {
         "id": user.id,
         "access_token": access_token,
