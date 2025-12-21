@@ -89,7 +89,6 @@ class AllCategories(BaseModel):
     categories: list[CategoryResponse]
 
 class CategoryTransactionResponse(BaseModel):
-<<<<<<< HEAD
 
     transactions: list[Transaction]
 
@@ -123,6 +122,3 @@ class RecentTransactionsResponse(BaseModel):
     days: int
     transactions: List[TransactionResponse]
 
-=======
-    transactions: list[Transaction]
->>>>>>> 36e3df8 (resolved the conflict with main)
