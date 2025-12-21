@@ -13,12 +13,18 @@ class TransactionResponse(BaseModel):
    
 
     class Config:
-       from_attribute = True
+      from_attribute = True
         
 class FilteredTransactionResponse(BaseModel):
+
  
     start_date:Optional[date] =None
     end_date:Optional[date] =None
+
+    
+    start_date_ms:Optional[int] =None
+    end_date_ms:Optional[int] =None
+
     transactions:List[TransactionResponse]
 
 class TransactionType(str, Enum):
