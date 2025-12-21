@@ -1,22 +1,25 @@
-from fastapi import Request
+from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from db import models
 from jwt import decode, DecodeError
 from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 from db.database import get_db
+from utils.utils import decode_token
 
-SECRET = "honey_bunny"  # Move this to env
 
 def get_user_from_token(token: str, db: Session):
     try:
-        payload = decode(token, SECRET, algorithms=["HS256"])
-        user_id = payload.get("id")
+        payload = decode_token(token)
+        user_id = int(payload.get("sub"))
         if not user_id:
             return None
+    except HTTPException:
+        return None
+    try:
         user = db.query(models.User).filter(models.User.id == user_id).first()
         return user
-    except DecodeError:
+    except Exception:
         return None
 
 

@@ -90,3 +90,11 @@ class AllCategories(BaseModel):
 
 class CategoryTransactionResponse(BaseModel):
     transactions: list[Transaction]
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+class AccessTokenResponse(BaseModel):
+    id: int
+    access_token: str
