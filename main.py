@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from routes import authRoutes, transactions, categoryRoutes
 from db.database import engine
-import db.models
+import db.models as models
 from middlewares.authMiddleWare import AuthMiddleware
 from fastapi.security import HTTPBearer
 
@@ -17,7 +17,7 @@ auth_scheme = HTTPBearer()
 
 @app.on_event("startup")
 async def startup():
-    db.models.Base.metadata.create_all(bind=engine)
+    models.Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def root():

@@ -4,9 +4,62 @@ from schemas.schemas import Transaction
 from db import models
 from db.database import get_db
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from typing import Optional
+from datetime import date,time,datetime,timezone,timedelta
+from schemas.schemas import FilteredTransactionResponse, TransactionResponse
+from utils import utils
 
 router = APIRouter()
 security = HTTPBearer()
+
+@router.get("/transactions", response_model=FilteredTransactionResponse)
+def get_transactions(
+    request: Request,
+    start_date_ms: Optional[int] = None,
+    end_date_ms: Optional[int] = None,
+    db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    
+    
+    if start_date_ms is not None and start_date_ms < 0:
+        raise HTTPException(status_code=400, detail="start_date_ms must be positive")
+    if end_date_ms is not None and end_date_ms < 0:
+        raise HTTPException(status_code=400, detail="end_date_ms must be positive")
+    
+    start_date = utils.ms_to_utc_nepal(start_date_ms) if start_date_ms is not None else None
+    end_date = utils.ms_to_utc_nepal(end_date_ms) if end_date_ms is not None else None
+
+ # it must be exactly here for the reason of original values
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=400, detail="start_date cannot be greater than end_date")
+
+    user_id = request.state.user.id
+    query = db.query(models.Transaction).filter(models.Transaction.user_id == user_id)
+
+    if start_date :
+        start_date =start_date.replace(hour=0, minute=0, second=0)
+        query = query.filter(models.Transaction.created_date >= start_date)
+
+
+    if end_date:
+        end_date = end_date.replace(hour=0, minute=0, second=0)
+        end_date  +=timedelta(days=1)
+        query=query.filter(models.Transaction.created_date < end_date)
+   
+
+    transactions = query.order_by(models.Transaction.created_date.desc()).all()
+    
+    if start_date_ms is None and end_date_ms is None:
+        return {
+            'transactions': transactions
+        }
+    return {
+        'start_date_ms': start_date_ms,
+        'end_date_ms': end_date_ms,
+        'transactions': transactions
+    }
+
 
 @router.post('/transactions')
 def post_transactions(request:Request, transaction:Transaction, db:Session=Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -20,6 +73,7 @@ def post_transactions(request:Request, transaction:Transaction, db:Session=Depen
         category = db.query(models.Category).filter(models.Category.id == category_id).first()
         if not category:
             raise HTTPException(status_code=404, detail="Category not found")
+
     new_transaction = models.Transaction(
         transaction_type=transaction.transaction_type,
         amount=transaction.amount,
@@ -28,6 +82,9 @@ def post_transactions(request:Request, transaction:Transaction, db:Session=Depen
         category_id=category_id,
         transaction_date=transaction.transaction_date,
     )
+    
+    new_transaction = models.Transaction(transaction_type=transaction.transaction_type, amount=transaction.amount, note=transaction.note, user_id=user_id, category_id=category_id,created_date=datetime.now(timezone.utc))
+
     db.add(new_transaction)
     user.current_balance += transaction.amount if transaction.transaction_type == "income" else -transaction.amount
     db.commit()
@@ -37,15 +94,6 @@ def post_transactions(request:Request, transaction:Transaction, db:Session=Depen
         'id': new_transaction.id,
         'message': "New transaction added",
         'userStatus': 'new balance: ' + str(user.current_balance)
-    }
-
-
-@router.get('/transactions')
-def get_transactions(request:Request, db:Session=Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
-    userId = request.state.user.id
-    transactions = db.query(models.Transaction).filter(models.Transaction.user_id == userId).all()
-    return{
-        "transactions": transactions
     }
 
 
