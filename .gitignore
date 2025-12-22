@@ -11,3 +11,5 @@ wheels/
 financeTracker.db
 
 .env
+.vercel
+.env*.local
