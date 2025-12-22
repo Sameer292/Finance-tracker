@@ -73,17 +73,18 @@ def post_transactions(request:Request, transaction:Transaction, db:Session=Depen
         category = db.query(models.Category).filter(models.Category.id == category_id).first()
         if not category:
             raise HTTPException(status_code=404, detail="Category not found")
-
+    transaction_date_obj = transaction.transaction_date 
     new_transaction = models.Transaction(
         transaction_type=transaction.transaction_type,
         amount=transaction.amount,
         note=transaction.note,
         user_id=user_id,
         category_id=category_id,
-        transaction_date=transaction.transaction_date,
+        transaction_date=transaction_date_obj,
+        created_date=datetime.now(timezone.utc),
     )
     
-    new_transaction = models.Transaction(transaction_type=transaction.transaction_type, amount=transaction.amount, note=transaction.note, user_id=user_id, category_id=category_id,created_date=datetime.now(timezone.utc))
+    # new_transaction = models.Transaction(transaction_type=transaction.transaction_type, amount=transaction.amount, note=transaction.note, user_id=user_id, category_id=category_id,)
 
     db.add(new_transaction)
     user.current_balance += transaction.amount if transaction.transaction_type == "income" else -transaction.amount

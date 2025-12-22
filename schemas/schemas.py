@@ -8,9 +8,11 @@ class TransactionResponse(BaseModel):
     transaction_type: str
     amount: int
     note: Optional[str] = None
+
     created_date: datetime
     updated_date: datetime
-   
+    category_id: Optional[int] = None
+    transaction_date: datetime
 
     class Config:
       from_attribute = True
