@@ -71,16 +71,14 @@ def post_transactions(
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    print(transaction)
     category_id = transaction.category_id
     if category_id is not None:
         category = (
-            db.query(models.Category).filter(models.Category.id == category_id).first()
+            db.query(models.Category).filter(models.Category.id == category_id, models.Category.user_id == user_id).first()
         )
         if not category:
             raise HTTPException(status_code=404, detail="Category not found")
 
-    print(transaction.transaction_date)
     new_transaction = models.Transaction(
         transaction_type=transaction.transaction_type,
         amount=transaction.amount,

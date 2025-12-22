@@ -84,7 +84,6 @@ def get_user(
     request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     if not request.state.user:
-        print(request)
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     return request.state.user

@@ -39,7 +39,6 @@ def get_categories(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     user_id = request.state.user.id
-    print("CATEGORIES", user_id)
     categories = db.query(models.Category).filter(models.Category.user_id == user_id).all()
     if not categories:
         raise HTTPException(status_code=404, detail="Categories not found")
