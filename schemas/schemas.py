@@ -10,6 +10,8 @@ class TransactionResponse(BaseModel):
     note: Optional[str] = None
     created_date: datetime
     updated_date: datetime
+    category_id: Optional[int] = None
+    transaction_date: Optional[datetime] = None
    
 
     class Config:
@@ -26,6 +28,11 @@ class FilteredTransactionResponse(BaseModel):
     end_date_ms:Optional[int] =None
 
     transactions:List[TransactionResponse]
+
+class RecentTransactionsResponse(BaseModel):
+    detail: str
+    days: int
+    transactions: List[TransactionResponse]       
 
 class TransactionType(str, Enum):
     INCOME = "income"
@@ -83,6 +90,8 @@ class CategoryResponse(BaseModel):
     name: str
     color: str
     icon: str
+
+ 
 
 
 class AllCategories(BaseModel):
