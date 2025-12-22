@@ -3,7 +3,7 @@ name = "financetracker"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "argon2-cffi>=25.1.0",
     "bcrypt>=5.0.0",
@@ -12,6 +12,8 @@ dependencies = [
     "pyjwt>=2.10.1",
     "sqlalchemy>=2.0.44",
     "uvicorn>=0.38.0",
-    "python-dotenv>=1.2.0",       # load .env files
-    "pydantic-settings>=2.12.0"   # read settings from .env
+    "python-dotenv>=1.2.0", # load .env files # read settings from .env
+    "pydantic-settings>=2.12.0",
+    "psycopg2-binary>=2.9.11",
+    "pydantic-core>=2.41.5",
 ]
