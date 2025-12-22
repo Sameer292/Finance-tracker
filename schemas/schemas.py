@@ -8,7 +8,6 @@ class TransactionResponse(BaseModel):
     transaction_type: str
     amount: int
     note: Optional[str] = None
-
     created_date: datetime
     updated_date: datetime
     category_id: Optional[int] = None
@@ -19,11 +18,8 @@ class TransactionResponse(BaseModel):
         
 class FilteredTransactionResponse(BaseModel):
 
- 
     start_date:Optional[date] =None
     end_date:Optional[date] =None
-
-    
     start_date_ms:Optional[int] =None
     end_date_ms:Optional[int] =None
 
@@ -59,7 +55,6 @@ class Transaction(BaseModel):
             return datetime.strptime(v, "%Y-%m-%d")
         return v
 
-
 class UserResponse(BaseModel):
     id: int
     email: str
@@ -68,7 +63,6 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True 
-
 
 class AllUsers(BaseModel):
     users: list[UserResponse]
@@ -79,13 +73,11 @@ class Category(BaseModel):
     color: str
     icon: str
 
-
 class CategoryResponse(BaseModel):
     id: int
     name: str
     color: str
     icon: str
-
 
 class AllCategories(BaseModel):
     categories: list[CategoryResponse]
