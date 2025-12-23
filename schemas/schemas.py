@@ -2,7 +2,6 @@ from pydantic import BaseModel, field_validator
 from enum import Enum
 from datetime import date,datetime
 from typing import List,Optional
-
 class TransactionResponse(BaseModel):
     id: int
     transaction_type: str
