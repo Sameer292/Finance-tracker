@@ -24,8 +24,7 @@ class FilteredTransactionResponse(BaseModel):
     transactions:List[TransactionResponse]
 
 class RecentTransactionsResponse(BaseModel):
-    detail: str
-    days: int
+    message: str
     transactions: List[TransactionResponse]       
 
 class TransactionType(str, Enum):
@@ -84,8 +83,6 @@ class CategoryResponse(BaseModel):
     name: str
     color: str
     icon: str
-
- 
 
 
 class AllCategories(BaseModel):

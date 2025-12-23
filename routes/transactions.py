@@ -128,14 +128,12 @@ def get_recent_transactions(
     )
     if not transactions:
         return {
-            "detail":"No recent transactions found",
-            "days":3,
+            "message":"No recent transactions found",
             "transactions":[]
         }
     return {
 
-        "detail":"Recent transactions retrieved successfully",
-        "days":3,
+        "message":"Recent transactions retrieved successfully",
         "transactions":transactions
     }
 
