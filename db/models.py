@@ -18,7 +18,6 @@ class User(Base):
     email = Column(String)
     password = Column(String)
     current_balance = Column(Integer, default=0)
-
     transactions = relationship("Transaction", back_populates="user")
     categories = relationship("Category", back_populates="user")
 
@@ -30,17 +29,13 @@ class Transaction(Base):
     transaction_type = Column(Enum(TransactionType))
     amount = Column(Integer)
     note = Column(String, nullable=True)
-
     transaction_date = Column(DateTime, nullable=True, default=datetime.datetime.utcnow)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     updated_date = Column(
-        DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow
-    )
-
+        DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)  
+    
     created_date = Column(DateTime(timezone=True),server_default=func.now())
     updated_date = Column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now())
-
-
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="transactions")
     category_id = Column(Integer, ForeignKey("categories.id"))
@@ -54,7 +49,6 @@ class Category(Base):
     name = Column(String)
     color = Column(String)
     icon = Column(String)
-
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="categories")
     transactions = relationship("Transaction", back_populates="category")

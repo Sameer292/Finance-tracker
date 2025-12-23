@@ -114,8 +114,7 @@ def get_recent_transactions(
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
-
-    user_id = getattr(request.state.user, "id", None)
+    user_id = request.state.user.id
 
     start_date = datetime.utcnow() - timedelta(days=3)
     transactions = (
@@ -133,7 +132,6 @@ def get_recent_transactions(
             "days":3,
             "transactions":[]
         }
-
     return {
 
         "detail":"Recent transactions retrieved successfully",
