@@ -98,14 +98,13 @@ class AccessTokenResponse(BaseModel):
     id: int
     access_token: str
 
-class CategorySummaryIncome(BaseModel):
+class CategorySummary(BaseModel):
     category: str
-    income: int = 0
+    amount: int = 0
 
-class CategorySummaryExpense(BaseModel):
-    category: str
-    expense: int = 0
+class FinanceSummary(BaseModel):
+    income: List[CategorySummary]
+    expense: List[CategorySummary]
 
 class FinanceSummaryResponse(BaseModel):
-    income: List[CategorySummaryIncome]
-    expense: List[CategorySummaryExpense]
+    summary: FinanceSummary

@@ -58,3 +58,34 @@ def ms_to_utc_nepal(ms: int) -> datetime:
         nepal_time= datetime.fromtimestamp(ms / 1000)
         utc_time = nepal_time.replace(microsecond=0, tzinfo=timezone.utc)
         return utc_time
+
+def get_top_categories(transactions, categories):
+    
+    category_map = {c.id: c.name for c in categories}
+
+    summary_income={}
+    summary_expense={}
+
+    for t in transactions:
+        category_name = category_map.get(t.category_id, "Other")
+        
+        if t.transaction_type == 'income':
+            summary_income.setdefault(category_name, {"category": category_name, "amount": 0})
+            summary_income[category_name]["amount"] += t.amount
+        else:
+            summary_expense.setdefault(category_name, {"category": category_name, "amount": 0})
+            summary_expense[category_name]["amount"] += t.amount
+    
+    income_sorted = sorted(summary_income.values(), key=lambda x: x["amount"], reverse=True)
+    top4_income = income_sorted[:4]
+    other_income = {"category": "Other", "amount": sum(x["amount"] for x in income_sorted[4:])} if len(income_sorted) > 4 else None
+    if other_income:
+       top4_income.append(other_income)
+
+    expense_sorted = sorted(summary_expense.values(), key=lambda x: x["amount"], reverse=True)
+    top4_expense = expense_sorted[:4]
+    other_expense = {"category": "Other", "amount": sum(x["amount"] for x in expense_sorted[4:])} if len(expense_sorted) > 4 else None
+    if other_expense:
+       top4_expense.append(other_expense)
+
+    return top4_income, top4_expense
