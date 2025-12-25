@@ -101,6 +101,7 @@ class AccessTokenResponse(BaseModel):
 class CategorySummary(BaseModel):
     category: str
     amount: int = 0
+    totaltransaction: int = 0
 
 class FinanceSummary(BaseModel):
     income: List[CategorySummary]
