@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Depends, Request, HTTPException,status
 from sqlalchemy.orm import Session
 from schemas.schemas import Transaction
 from db import models
@@ -6,7 +6,7 @@ from db.database import get_db
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
 from datetime import date, time, datetime, timezone, timedelta
-from schemas.schemas import FilteredTransactionResponse, TransactionResponse
+from schemas.schemas  import FilteredTransactionResponse, TransactionResponse,RecentTransactionsResponse
 from utils import utils
 
 router = APIRouter()
@@ -104,6 +104,38 @@ def post_transactions(
         "userStatus": "new balance: " + str(user.current_balance),
     }
 
+@router.get(
+    "/transactions/recent",
+    response_model=RecentTransactionsResponse,
+    status_code=status.HTTP_200_OK
+)
+def get_recent_transactions(
+    request: Request,
+    db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    user_id = request.state.user.id
+
+    start_date = datetime.utcnow() - timedelta(days=3)
+    transactions = (
+        db.query(models.Transaction)
+        .filter(
+            models.Transaction.user_id == user_id,
+            models.Transaction.created_date >= start_date
+        )
+        .order_by(models.Transaction.created_date.desc())
+        .all()
+    )
+    if not transactions:
+        return {
+            "message":"No recent transactions found",
+            "transactions":[]
+        }
+    return {
+
+        "message":"Recent transactions retrieved successfully",
+        "transactions":transactions
+    }
 
 @router.get("/transactions/{id}")
 def get_transaction(
@@ -142,6 +174,7 @@ def delete_transaction(
     db.delete(transaction)
     db.commit()
     return {"message": "Transaction deleted"}
+
 
 
 @router.delete("/transactions")

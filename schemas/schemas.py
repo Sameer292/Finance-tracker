@@ -2,7 +2,6 @@ from pydantic import BaseModel, field_validator
 from enum import Enum
 from datetime import date,datetime
 from typing import List,Optional
-
 class TransactionResponse(BaseModel):
     id: int
     transaction_type: str
@@ -10,22 +9,22 @@ class TransactionResponse(BaseModel):
     note: Optional[str] = None
     created_date: datetime
     updated_date: datetime
-   
+    category_id: Optional[int] = None
+    transaction_date: Optional[datetime] = None
 
     class Config:
       from_attribute = True
         
 class FilteredTransactionResponse(BaseModel):
-
- 
     start_date:Optional[date] =None
     end_date:Optional[date] =None
-
-    
     start_date_ms:Optional[int] =None
     end_date_ms:Optional[int] =None
-
     transactions:List[TransactionResponse]
+
+class RecentTransactionsResponse(BaseModel):
+    message: str
+    transactions: List[TransactionResponse]       
 
 class TransactionType(str, Enum):
     INCOME = "income"
