@@ -109,3 +109,6 @@ class FinanceSummary(BaseModel):
 
 class FinanceSummaryResponse(BaseModel):
     summary: FinanceSummary
+
+class SummaryResponse(BaseModel):
+    summary: List[CategorySummary]

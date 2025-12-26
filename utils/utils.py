@@ -6,6 +6,7 @@ import jwt
 import uuid
 from datetime import date, time,datetime,timezone
 from typing import List, Dict
+from schemas.schemas import Transaction, Category, SummaryResponse
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -61,12 +62,12 @@ def ms_to_utc_nepal(ms: int) -> datetime:
         return utc_time
 
 
-def top_n_and_other_category(summary: Dict[str, Dict], n: int = 4, other_label: str = "Other") -> List[Dict]:
+def top_n_and_other_category(summary:SummaryResponse,other_label: str = "Other") -> List[Dict]:
     items = list(summary.values())
     items.sort(key=lambda x: x["amount"], reverse=True)
 
-    top_category = items[:n]
-    rest_category = items[n:]
+    top_category = items[:4]
+    rest_category = items[4:]
 
     if rest_category:
         top_category.append({
@@ -78,7 +79,7 @@ def top_n_and_other_category(summary: Dict[str, Dict], n: int = 4, other_label: 
     return top_category
 
 
-def get_top_categories(transactions: List[Dict], categories: List[Dict]):
+def get_top_categories(transactions:Transaction, categories: Category):
     
     category_map = {c.id: c.name for c in categories}
 
@@ -97,13 +98,10 @@ def get_top_categories(transactions: List[Dict], categories: List[Dict]):
             summary_expense[category_name]["amount"] += t.amount
             summary_expense[category_name]["totaltransaction"] += 1
     
-    income_sorted = sorted(summary_income.values(), key=lambda x: x["amount"], reverse=True)
-    top4_income = income_sorted[:4]
-    other_income = {"category": "Other", "amount": sum(x["amount"] for x in income_sorted[4:])} 
+   
+    top4_income = top_n_and_other_category(summary_income)
+    top4_expense = top_n_and_other_category(summary_expense)
+    print(top4_expense)
     
-    top4_income = top_n_and_other_category(summary_income, n=4, other_label="Other")
-    top4_expense = top_n_and_other_category(summary_expense, n=4, other_label="Other")
-
-
 
     return top4_income, top4_expense
