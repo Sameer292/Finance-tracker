@@ -62,7 +62,7 @@ def ms_to_utc_nepal(ms: int) -> datetime:
         return utc_time
 
 
-def top_n_and_other_category(summary:SummaryResponse,other_label: str = "Other") -> List[Dict]:
+def top_n_and_other_category(summary:SummaryResponse, other_label: str = "Other"):
     items = list(summary.values())
     items.sort(key=lambda x: x["amount"], reverse=True)
 
