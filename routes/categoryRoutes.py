@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from schemas.schemas import Category, AllCategories
 from db import models
-from schemas.schemas import Transaction, CategoryTransactionResponse
+from schemas.schemas import Transaction, CategoryTransactionResponse,Categoryupdate
 
 router = APIRouter()
 security = HTTPBearer()
@@ -75,3 +75,56 @@ def deleteCategory(id: int, db: Session = Depends(get_db)):
         "message": "Category deleted successfully",
     }
 
+@router.delete("/categories")
+def delete_all_categories(
+    request: Request,
+    db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    if not request.state.user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    user_id = request.state.user.id
+    db.query(models.Transaction).filter(
+        models.Transaction.user_id == user_id
+    ).delete(synchronize_session=False)
+    db.query(models.Category).filter(
+        models.Category.user_id == user_id
+    ).delete(synchronize_session=False)
+    db.commit()
+    return {
+        "message": "All categories and related transactions deleted"
+        }
+
+
+@router.patch("/categories/{category_id}")
+def update_category(
+    request: Request,
+    category_id: int,
+    payload: Categoryupdate,
+    db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    if not request.state.user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    user_id = request.state.user.id
+
+    category = db.query(models.Category).filter(
+        models.Category.id == category_id,
+        models.Category.user_id == user_id
+    ).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields provided for update")
+    for field, value in update_data.items():
+      if isinstance(value, str) and not value.strip():
+        raise HTTPException(status_code=400, detail=f"{field} cannot be empty")
+      setattr(category, field, value)
+    db.commit()
+    db.refresh(category)
+    return {
+        "message": "Category updated successfully",
+        "category": category
+    }

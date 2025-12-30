@@ -6,7 +6,7 @@ from db.database import get_db
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
 from datetime import date, time, datetime, timezone, timedelta
-from schemas.schemas  import FilteredTransactionResponse, TransactionResponse,RecentTransactionsResponse
+from schemas.schemas  import FilteredTransactionResponse, TransactionResponse,RecentTransactionsResponse,TransactionUpdate
 from utils import utils
 
 router = APIRouter()
@@ -137,6 +137,58 @@ def get_recent_transactions(
         "transactions":transactions
     }
 
+@router.patch("/transactions/{transaction_id}")
+def update_transaction(
+    request: Request,
+    transaction_id: int,
+    payload: TransactionUpdate,
+    db: Session = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    if not request.state.user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    user_id = request.state.user.id
+    
+    transactions = db.query(models.Transaction).filter(
+        models.Transaction.id == transaction_id,
+        models.Transaction.user_id == user_id,
+    ).first()
+    if not transactions:
+        raise HTTPException(status_code=404, message="Transaction not found")
+    update_data = payload.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(
+            status_code=400,
+            detail="No fields provided for update"
+        )
+    if "amount" in update_data and update_data["amount"] is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Amount cannot be null"
+        )
+    if "amount" in update_data and update_data["amount"] < 0:
+       raise HTTPException(
+        status_code=400,
+        detail="Amount cannot be negative"
+    )
+    if "category_id" in update_data:
+        category = db.query(models.Category).filter(
+        models.Category.id == update_data["category_id"]
+    ).first()
+        if not category:
+          raise HTTPException(
+             status_code=400,
+             detail="Invalid category_id"
+         )
+    for field, value in update_data.items():
+        setattr(transactions, field, value)
+    db.commit()
+    db.refresh(transactions)
+    return {
+        "message": "Transaction updated successfully",
+        "transaction": transactions
+    }
+
 @router.get("/transactions/{id}")
 def get_transaction(
     request: Request,
@@ -144,8 +196,10 @@ def get_transaction(
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
+    user_id = request.state.user.id 
     transaction = (
-        db.query(models.Transaction).filter(models.Transaction.id == id).first()
+        db.query(models.Transaction).filter(models.Transaction.id == id,
+                                            models.Transaction.user_id == user_id).first()
     )
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
@@ -191,31 +245,31 @@ def delete_all_transactions(
     return {"message": "All transactions deleted"}
 
 
-@router.put("/transactions/{id}")
-def update_transaction(
-    request: Request,
-    id: int,
-    transaction: Transaction,
-    db: Session = Depends(get_db),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-):
-    queried_transaction = (
-        db.query(models.Transaction).filter(models.Transaction.id == id).first()
-    )
-    if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
-    user_id = request.state.user.id
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    amount_delta = transaction.amount - queried_transaction.amount
-    user.current_balance -= (
-        amount_delta
-        if queried_transaction.transaction_type == "income"
-        else amount_delta
-    )
-    queried_transaction.transaction_type = transaction.transaction_type
-    queried_transaction.amount = transaction.amount
-    db.commit()
-    return {"message": "Transaction updated"}
+# @router.put("/transactions/{id}")
+# def update_transaction(
+#     request: Request,
+#     id: int,
+#     transaction: Transaction,
+#     db: Session = Depends(get_db),
+#     credentials: HTTPAuthorizationCredentials = Depends(security),
+# ):
+#     queried_transaction = (
+#         db.query(models.Transaction).filter(models.Transaction.id == id).first()
+#     )
+#     if not transaction:
+#         raise HTTPException(status_code=404, detail="Transaction not found")
+#     user_id = request.state.user.id
+#     user = db.query(models.User).filter(models.User.id == user_id).first()
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+#     amount_delta = transaction.amount - queried_transaction.amount
+#     user.current_balance -= (
+#         amount_delta
+#         if queried_transaction.transaction_type == "income"
+#         else amount_delta
+#     )
+#     queried_transaction.transaction_type = transaction.transaction_type
+#     queried_transaction.amount = transaction.amount
+#     db.commit()
+#     return {"message": "Transaction updated"}
 

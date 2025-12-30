@@ -13,8 +13,24 @@ class TransactionResponse(BaseModel):
     transaction_date: Optional[datetime] = None
 
     class Config:
-      from_attribute = True
-        
+      from_attribute = True;
+      
+class TransactionType(str, Enum):
+    INCOME = "income"
+    EXPENSE = "expense"
+
+class TransactionUpdate(BaseModel):
+    amount: Optional[int] = None
+    note: Optional[str] = None
+    transaction_date: Optional[date] = None
+    category_id: Optional[int] = None
+    transaction_type: Optional[TransactionType] = None
+
+class Categoryupdate(BaseModel):
+    name: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+
 class FilteredTransactionResponse(BaseModel):
     start_date:Optional[date] =None
     end_date:Optional[date] =None
@@ -25,10 +41,6 @@ class FilteredTransactionResponse(BaseModel):
 class RecentTransactionsResponse(BaseModel):
     message: str
     transactions: List[TransactionResponse]       
-
-class TransactionType(str, Enum):
-    INCOME = "income"
-    EXPENSE = "expense"
 
 class CreateUser(BaseModel):
     name: str
@@ -56,7 +68,6 @@ class Transaction(BaseModel):
             return datetime.strptime(v, "%Y-%m-%d")
         return v
 
-
 class UserResponse(BaseModel):
     id: int
     email: str
@@ -70,12 +81,10 @@ class UserResponse(BaseModel):
 class AllUsers(BaseModel):
     users: list[UserResponse]
 
-
 class Category(BaseModel):
     name: str
     color: str
     icon: str
-
 
 class CategoryResponse(BaseModel):
     id: int
@@ -83,13 +92,11 @@ class CategoryResponse(BaseModel):
     color: str
     icon: str
 
-
 class AllCategories(BaseModel):
     categories: list[CategoryResponse]
 
 class CategoryTransactionResponse(BaseModel):
     transactions: list[Transaction]
-
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str

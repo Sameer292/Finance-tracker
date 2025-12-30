@@ -33,7 +33,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if user:
                 request.state.user = user
             else:
-                return JSONResponse({"detail": "Invalid token"}, status_code=401)
+                return JSONResponse({"message": "Invalid token"}, status_code=401)
         else:
             request.state.user = None
         try:
