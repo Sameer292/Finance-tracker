@@ -16,8 +16,16 @@ def add_category(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_auth),
 ):
+    normalized_name = category.name.strip().lower()
+    existing_category = db.query(models.Category).filter(
+        models.Category.user_id == current_user.id,
+        models.Category.name.ilike(normalized_name)
+    ).first()
+    if existing_category:
+        raise HTTPException(status_code=400, detail="Category with this name already exists")
+    
     new_category = models.Category(
-        name=category.name.strip(),
+        name=normalized_name,
         color=category.color,
         icon=category.icon,
         user_id=current_user.id
@@ -37,22 +45,22 @@ def get_categories(
     return {"categories": categories}
 
 
-@router.get("/category/{id}", status_code=status.HTTP_200_OK)
+@router.get("/categories/{id}", status_code=status.HTTP_200_OK)
 def get_category(
     id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_auth),
 ):
-    category = db.query(models.Category).filter(
+    categories = db.query(models.Category).filter(
         models.Category.id == id,
         models.Category.user_id == current_user.id
     ).first()
-    if not category:
+    if not categories:
         raise HTTPException(status_code=404, detail="Category not found")
-    return category
+    return categories
 
 
-@router.get("/category/{id}/transactions", response_model=CategoryTransactionResponse)
+@router.get("/categories/{id}/transactions", response_model=CategoryTransactionResponse)
 def category_transactions(
     id: int,
     db: Session = Depends(get_db),
@@ -100,7 +108,7 @@ def update_category(
     return {"message": "Category updated successfully", "category_id": category.id}
 
 
-@router.delete("/category/{category_id}")
+@router.delete("/categories/{category_id}")
 def delete_category(
     category_id: int,
     db: Session = Depends(get_db),

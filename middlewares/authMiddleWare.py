@@ -41,9 +41,10 @@ def get_user_from_token(token: str, db: Session):
         payload = decode_token(token)
         user_id = int(payload.get("sub"))  # just to ensure integer
         if not user_id:
-            return None
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+            
     except (KeyError, ValueError, DecodeError):
-        return None
+        raise HTTPException(status_code=401, detail="Invalid authentication token")
 
     return db.query(models.User).filter(models.User.id == user_id).first()
 
