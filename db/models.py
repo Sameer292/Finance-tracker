@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime, Float
 from sqlalchemy.orm import declarative_base, relationship
 import enum
 import datetime
@@ -27,13 +27,9 @@ class Transaction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     transaction_type = Column(Enum(TransactionType))
-    amount = Column(Integer)
+    amount = Column(Float)
     note = Column(String, nullable=True)
-    transaction_date = Column(DateTime, nullable=True, default=datetime.datetime.utcnow)
-    created_date = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_date = Column(
-        DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)  
-    
+    transaction_date = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     created_date = Column(DateTime(timezone=True),server_default=func.now())
     updated_date = Column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now())
     user_id = Column(Integer, ForeignKey("users.id"))

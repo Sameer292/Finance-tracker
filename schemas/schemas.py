@@ -5,7 +5,7 @@ from typing import List,Optional
 class TransactionResponse(BaseModel):
     id: int
     transaction_type: str
-    amount: int
+    amount: float
     note: Optional[str] = None
     created_date: datetime
     updated_date: datetime
@@ -41,7 +41,7 @@ class Login(BaseModel):
 
 class Transaction(BaseModel):
     transaction_type: TransactionType
-    amount: int
+    amount: float
     note: str | None = None
     category_id: int | None = None
     transaction_date: date | None = None
@@ -61,7 +61,7 @@ class UserResponse(BaseModel):
     id: int
     email: str
     name: str
-    current_balance: int
+    current_balance: float
 
     class Config:
         from_attributes = True 
