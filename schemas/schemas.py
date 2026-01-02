@@ -97,3 +97,18 @@ class RefreshTokenRequest(BaseModel):
 class AccessTokenResponse(BaseModel):
     id: int
     access_token: str
+
+class CategorySummary(BaseModel):
+    category: str
+    amount: int = 0
+    totaltransaction: int = 0
+
+class FinanceSummary(BaseModel):
+    income: List[CategorySummary]
+    expense: List[CategorySummary]
+
+class FinanceSummaryResponse(BaseModel):
+    summary: FinanceSummary
+
+class SummaryResponse(BaseModel):
+    summary: List[CategorySummary]
