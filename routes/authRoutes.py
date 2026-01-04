@@ -11,7 +11,6 @@ from schemas.schemas import (
     AccessTokenResponse,
     ChangePassword,
 )
-from jwt import encode
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from utils.utils import create_access_token, decode_token
 from datetime import timedelta
@@ -108,8 +107,12 @@ def change_password(
 
     user.password = utils.hash_password(password_data.new_password)
     db.commit()
+    accessToken = create_access_token(user_id=user.id)
 
-    return {"message": "Password changed successfully"}
+    return {
+        "message": "Password changed successfully", 
+        "accessToken": accessToken
+        }
 
 
 @router.get("/users", response_model=AllUsers, status_code=status.HTTP_200_OK)
