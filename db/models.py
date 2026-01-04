@@ -20,6 +20,9 @@ class User(Base):
     current_balance = Column(Integer, default=0)
     transactions = relationship("Transaction", back_populates="user")
     categories = relationship("Category", back_populates="user")
+    total_transactions = Column(Integer, default=0)
+    total_expenses = Column(Integer, default=0)
+    total_income = Column(Integer, default=0)
 
 
 class Transaction(Base):

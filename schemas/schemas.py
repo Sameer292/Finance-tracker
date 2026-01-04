@@ -67,6 +67,9 @@ class UserResponse(BaseModel):
     email: str
     name: str
     current_balance: float
+    total_transactions: int
+    total_expenses: float
+    total_income: float
 
     class Config:
         from_attributes = True

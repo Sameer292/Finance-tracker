@@ -95,6 +95,11 @@ def post_transactions(
         if transaction.transaction_type == "income"
         else -transaction.amount
     )
+    user.total_transactions += 1
+    if transaction.transaction_type == "expense":
+        user.total_expenses += transaction.amount
+    else:
+        user.total_income += transaction.amount
     db.commit()
     db.refresh(new_transaction)
     db.refresh(user)
