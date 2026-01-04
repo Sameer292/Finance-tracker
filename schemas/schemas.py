@@ -1,7 +1,8 @@
 from pydantic import BaseModel, field_validator
 from enum import Enum
-from datetime import date,datetime
-from typing import List,Optional
+from datetime import date, datetime
+from typing import List, Optional
+
 class TransactionResponse(BaseModel):
     id: int
     transaction_type: str
@@ -26,18 +27,22 @@ class RecentTransactionsResponse(BaseModel):
     message: str
     transactions: List[TransactionResponse]       
 
+
 class TransactionType(str, Enum):
     INCOME = "income"
     EXPENSE = "expense"
+
 
 class CreateUser(BaseModel):
     name: str
     email: str
     password: str
 
+
 class Login(BaseModel):
     email: str
     password: str
+
 
 class Transaction(BaseModel):
     transaction_type: TransactionType
@@ -64,7 +69,7 @@ class UserResponse(BaseModel):
     current_balance: float
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
 
 
 class AllUsers(BaseModel):
@@ -87,12 +92,19 @@ class CategoryResponse(BaseModel):
 class AllCategories(BaseModel):
     categories: list[CategoryResponse]
 
+
 class CategoryTransactionResponse(BaseModel):
     transactions: list[Transaction]
 
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
 
 class AccessTokenResponse(BaseModel):
     id: int
