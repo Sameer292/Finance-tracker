@@ -5,8 +5,8 @@ from db import models
 from db.database import get_db
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
-from datetime import date, time, datetime, timezone, timedelta
-from schemas.schemas  import FilteredTransactionResponse, TransactionResponse,RecentTransactionsResponse
+from datetime import datetime, timedelta
+from schemas.schemas  import FilteredTransactionResponse, RecentTransactionsResponse
 from utils import utils
 
 router = APIRouter()
