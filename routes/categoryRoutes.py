@@ -3,7 +3,8 @@ from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from db import models
 from db.database import get_db
-from schemas.schemas import Category, Categoryupdate, AllCategories, CategoryTransactionResponse
+from schemas.schemas import CategoryResponse,Category, Categoryupdate, TransactionResponse
+from typing import List
 from middlewares.authMiddleWare import require_auth
 
 router = APIRouter()
@@ -36,13 +37,13 @@ def add_category(
     return {"id": new_category.id, "message": "Category added successfully"}
 
 
-@router.get("/categories", response_model=AllCategories)
+@router.get("/categories", response_model=list[CategoryResponse], status_code=status.HTTP_200_OK)
 def get_categories(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_auth),
 ):
     categories = db.query(models.Category).filter(models.Category.user_id == current_user.id).all()
-    return {"categories": categories}
+    return categories
 
 
 @router.get("/categories/{id}", status_code=status.HTTP_200_OK)
@@ -60,7 +61,7 @@ def get_category(
     return categories
 
 
-@router.get("/categories/{id}/transactions", response_model=CategoryTransactionResponse)
+@router.get("/categories/{id}/transactions", response_model=List[TransactionResponse], status_code=status.HTTP_200_OK)
 def category_transactions(
     id: int,
     db: Session = Depends(get_db),

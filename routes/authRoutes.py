@@ -6,7 +6,6 @@ from schemas.schemas import (
     CreateUser,
     Login,
     UserResponse,
-    AllUsers,
     RefreshTokenRequest,
     AccessTokenResponse,
 )
@@ -89,12 +88,12 @@ def get_user(
     return request.state.user
 
 
-@router.get("/users", response_model=AllUsers, status_code=status.HTTP_200_OK)
+@router.get("/users", response_model=list[UserResponse], status_code=status.HTTP_200_OK)
 def get_AllUsers(
     db: Session = Depends(get_db),
 ):
     users = db.query(models.User).all()
-    return {"users": users}
+    return users
 
 
 @router.post("/seed_me", status_code=status.HTTP_200_OK)

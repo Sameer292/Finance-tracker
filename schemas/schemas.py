@@ -19,13 +19,29 @@ class TransactionType(str, Enum):
     INCOME = "income"
     EXPENSE = "expense"
 
-class TransactionUpdate(BaseModel):
-    amount: Optional[int] = None
-    note: Optional[str] = None
-    transaction_date: Optional[date] = None
-    category_id: Optional[int] = None
-    transaction_type: Optional[TransactionType] = None
+class Transaction(BaseModel):
+    transaction_type: TransactionType |None = None
+    amount: int |None = None
+    note: str | None = None
+    category_id: int | None = None
+    transaction_date: date | None = None
 
+@field_validator("transaction_date", mode="before")
+@classmethod
+def convert_to_datetime(cls, v):
+    if v is None:
+        return v
+
+    if isinstance(v, date) and not isinstance(v, datetime):
+        return datetime.combine(v, datetime.min.time())
+
+    return v
+
+
+class TransactionCreate(Transaction):
+    transaction_type: TransactionType
+    amount: int
+    
 class Categoryupdate(BaseModel):
     name: Optional[str] = None
     color: Optional[str] = None
@@ -51,23 +67,6 @@ class Login(BaseModel):
     email: str
     password: str
 
-class Transaction(BaseModel):
-    transaction_type: TransactionType
-    amount: int
-    note: str | None = None
-    category_id: int | None = None
-    transaction_date: date | None = None
-
-    @field_validator("transaction_date", mode="before")
-    @classmethod
-    def convert_to_datetime(cls, v):
-        if isinstance(v, date):
-            return datetime.combine(v, datetime.min.time())  # convert date → datetime
-        if isinstance(v, str):
-            # handle string just in case
-            return datetime.strptime(v, "%Y-%m-%d")
-        return v
-
 class UserResponse(BaseModel):
     id: int
     email: str
@@ -76,10 +75,6 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True 
-
-
-class AllUsers(BaseModel):
-    users: list[UserResponse]
 
 class Category(BaseModel):
     name: str
@@ -91,12 +86,6 @@ class CategoryResponse(BaseModel):
     name: str
     color: str
     icon: str
-
-class AllCategories(BaseModel):
-    categories: list[CategoryResponse]
-
-class CategoryTransactionResponse(BaseModel):
-    transactions: list[Transaction]
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str

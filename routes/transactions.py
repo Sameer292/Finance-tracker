@@ -7,7 +7,7 @@ from db import models
 from db.database import get_db
 from schemas.schemas import (
     Transaction,
-    TransactionUpdate,
+    TransactionCreate,
     FilteredTransactionResponse,
     RecentTransactionsResponse
 )
@@ -54,7 +54,7 @@ def get_transactions(
 
 @router.post("/transactions", status_code=status.HTTP_201_CREATED)
 def post_transaction(
-    transaction: Transaction,
+    transaction: TransactionCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_auth),
 ):
@@ -122,7 +122,7 @@ def get_recent_transactions(
 @router.patch("/transactions/{transaction_id}")
 def update_transaction(
     transaction_id: int,
-    payload: TransactionUpdate,
+    payload: Transaction,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_auth)
 ):
@@ -133,7 +133,7 @@ def update_transaction(
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    update_data = payload.model_dump(exclude_unset=True)
+    update_data = payload.model_dump(exclude_unset=True,exclude_none=True)
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields provided for update")
 
