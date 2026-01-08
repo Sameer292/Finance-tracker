@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from db import models
 from db.database import get_db
-from schemas.schemas import CategoryResponse,Category, Categoryupdate, TransactionResponse
+from schemas.schemas import Category, Categoryupdate, TransactionResponse,CategoryWithMessageResponse
 from typing import List
 from middlewares.authMiddleWare import require_auth
 
@@ -37,16 +37,19 @@ def add_category(
     return {"id": new_category.id, "message": "Category added successfully"}
 
 
-@router.get("/categories", response_model=list[CategoryResponse], status_code=status.HTTP_200_OK)
+@router.get("/categories", response_model=CategoryWithMessageResponse, status_code=status.HTTP_200_OK)
 def get_categories(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_auth),
 ):
     categories = db.query(models.Category).filter(models.Category.user_id == current_user.id).all()
-    return categories
+    return {
+        "message": "Categories fetched successfully",
+        "categories": categories
+    }
 
 
-@router.get("/categories/{id}", status_code=status.HTTP_200_OK)
+@router.get("/category/{id}", status_code=status.HTTP_200_OK)
 def get_category(
     id: int,
     db: Session = Depends(get_db),
@@ -58,7 +61,14 @@ def get_category(
     ).first()
     if not categories:
         raise HTTPException(status_code=404, detail="Category not found")
-    return categories
+    return {
+         "message": "Category fetched successfully",
+        "id": categories.id,
+        "name": categories.name,
+        "color": categories.color, 
+        "icon": categories.icon
+       
+    }
 
 
 @router.get("/categories/{id}/transactions", response_model=List[TransactionResponse], status_code=status.HTTP_200_OK)
@@ -121,7 +131,8 @@ def delete_category(
     ).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-
+    db.query(models.Transaction).filter(
+    models.Transaction.category_id == category.id).delete()
     db.delete(category)
     db.commit()
     return {"message": "Category deleted successfully"}

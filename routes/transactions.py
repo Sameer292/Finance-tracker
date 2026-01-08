@@ -59,18 +59,12 @@ def post_transaction(
     current_user: models.User = Depends(require_auth),
 ):
     
-    user = db.query(models.User).filter(
-        models.User.id == current_user.id
-    ).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
     # Validate category ownership
     if transaction.category_id:
         category = db.query(models.Category).filter(
             models.Category.id == transaction.category_id,
-            models.Category.user_id == user.id
+            models.Category.user_id == current_user.id
         ).first()
         if not category:
             raise HTTPException(status_code=404, detail="Category not found")
@@ -82,25 +76,24 @@ def post_transaction(
         note=transaction.note,
         transaction_date=transaction.transaction_date,
         category_id=transaction.category_id,
-        user_id=user.id
+        user_id=current_user.id
     )
 
     db.add(new_transaction)
 
     # Update balance safely
     if transaction.transaction_type == "income":
-        user.current_balance += transaction.amount
+        current_user.current_balance += transaction.amount
     else:
-        user.current_balance -= transaction.amount
+        current_user.current_balance -= transaction.amount
 
     db.commit()
     db.refresh(new_transaction)
-    db.refresh(user)
-
+    db.refresh(current_user)                        
     return {
         "id": new_transaction.id,
         "message": "Transaction added successfully",
-        "userStatus": f"new balance: {user.current_balance}"
+        "userStatus": f"new balance: {current_user.current_balance}"
     }
 
 @router.get("/transactions/recent", response_model=RecentTransactionsResponse)

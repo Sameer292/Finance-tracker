@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from schemas.schemas import (
     CreateUser,
     Login,
+    UsersWithMessageResponse,
     UserResponse,
     RefreshTokenRequest,
     AccessTokenResponse,
@@ -88,12 +89,15 @@ def get_user(
     return request.state.user
 
 
-@router.get("/users", response_model=list[UserResponse], status_code=status.HTTP_200_OK)
+@router.get("/users", response_model=UsersWithMessageResponse, status_code=status.HTTP_200_OK)
 def get_AllUsers(
     db: Session = Depends(get_db),
 ):
     users = db.query(models.User).all()
-    return users
+    return{
+        "message":"Users fetched successfully",
+        "users":users
+    }
 
 
 @router.post("/seed_me", status_code=status.HTTP_200_OK)

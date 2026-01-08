@@ -22,7 +22,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 user = get_user_from_token(token, db)
                 if user:
                     request.state.user = user
-                    print("USER:", request.state.user)
+                   
 
                 else:
                     return JSONResponse({"message": "Invalid token"}, status_code=401)
@@ -46,7 +46,10 @@ def get_user_from_token(token: str, db: Session):
     except (KeyError, ValueError, DecodeError):
         raise HTTPException(status_code=401, detail="Invalid authentication token")
 
-    return db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user 
 
 
 # Dependency to protect routes

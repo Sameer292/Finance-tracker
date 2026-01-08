@@ -76,6 +76,11 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True 
 
+class UsersWithMessageResponse(BaseModel):
+    message: str
+    users: list[UserResponse]
+
+
 class Category(BaseModel):
     name: str
     color: str
@@ -86,6 +91,10 @@ class CategoryResponse(BaseModel):
     name: str
     color: str
     icon: str
+
+class CategoryWithMessageResponse(BaseModel):
+    message: str
+    categories: List[CategoryResponse]    
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
