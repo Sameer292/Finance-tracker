@@ -1,7 +1,6 @@
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from db import models
-from jwt import decode, DecodeError
 from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 from db.database import get_db

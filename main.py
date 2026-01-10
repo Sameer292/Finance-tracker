@@ -23,6 +23,6 @@ async def startup():
 def root():
     return {"message": "Working"}
 
-app.include_router(authRoutes.router)
-app.include_router(transactions.router)
-app.include_router(categoryRoutes.router)
+app.include_router(authRoutes.router, tags=["Auth"])
+app.include_router(transactions.router, tags=["Transactions"])
+app.include_router(categoryRoutes.router, tags=["Categories"])
