@@ -90,16 +90,13 @@ def post_transactions(
     
     
     db.add(new_transaction)
-    user.current_balance += (
-        transaction.amount
-        if transaction.transaction_type == "income"
-        else -transaction.amount
-    )
     user.total_transactions += 1
     if transaction.transaction_type == "expense":
         user.total_expenses += transaction.amount
+        user.current_balance -= transaction.amount
     else:
         user.total_income += transaction.amount
+        user.current_balance += transaction.amount
     db.commit()
     db.refresh(new_transaction)
     db.refresh(user)
@@ -171,11 +168,12 @@ def delete_transaction(
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
     user = db.query(models.User).filter(models.User.id == user_id).first()
-    user.current_balance -= (
-        transaction.amount
-        if transaction.transaction_type == "income"
-        else transaction.amount
-    )
+    if transaction.transaction_type == "expense":
+        user.total_expenses -= transaction.amount
+        user.current_balance += transaction.amount
+    else:
+        user.total_income -= transaction.amount
+        user.current_balance -= transaction.amount
     db.delete(transaction)
     db.commit()
     return {"message": "Transaction deleted"}
@@ -192,6 +190,8 @@ def delete_all_transactions(
     user_id = request.state.user.id
     user = db.query(models.User).filter(models.User.id == user_id).first()
     user.current_balance = 0
+    user.total_expenses = 0
+    user.total_income = 0
     db.commit()
     return {"message": "All transactions deleted"}
 
@@ -214,13 +214,21 @@ def update_transaction(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     amount_delta = transaction.amount - queried_transaction.amount
-    user.current_balance -= (
-        amount_delta
-        if queried_transaction.transaction_type == "income"
-        else amount_delta
-    )
-    queried_transaction.transaction_type = transaction.transaction_type
-    queried_transaction.amount = transaction.amount
+    if transaction.category_id is not None:
+        category = (
+            db.query(models.Category).filter(models.Category.id == transaction.category_id, models.Category.user_id == user_id).first()
+        )
+        if not category:
+            raise HTTPException(status_code=404, detail="Category not found")
+        queried_transaction.category_id = transaction.category_id
+    queried_transaction.note = transaction.note
+    queried_transaction.transaction_date = transaction.transaction_date
+    if transaction.transaction_type == "expense":
+        user.total_expenses += amount_delta
+        user.current_balance -= amount_delta
+    else:
+        user.total_income += amount_delta
+        user.current_balance += amount_delta
     db.commit()
     return {"message": "Transaction updated"}
 
