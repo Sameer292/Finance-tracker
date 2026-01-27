@@ -5,6 +5,8 @@ from src.settings import settings
 import jwt
 import uuid
 from datetime import date, time,datetime,timezone
+from typing import List, Dict
+from schemas.schemas import Transaction, Category, SummaryResponse
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -58,3 +60,48 @@ def ms_to_utc_nepal(ms: int) -> datetime:
         nepal_time= datetime.fromtimestamp(ms / 1000)
         utc_time = nepal_time.replace(microsecond=0, tzinfo=timezone.utc)
         return utc_time
+
+
+def top_n_and_other_category(summary:SummaryResponse, other_label: str = "Other"):
+    items = list(summary.values())
+    items.sort(key=lambda x: x["amount"], reverse=True)
+
+    top_category = items[:4]
+    rest_category = items[4:]
+
+    if rest_category:
+        top_category.append({
+            "category": other_label,
+            "amount": sum(x["amount"] for x in rest_category),
+            "totaltransaction": sum(x["totaltransaction"] for x in rest_category),
+        })
+
+    return top_category
+
+
+def get_top_categories(transactions:Transaction, categories: Category):
+    
+    category_map = {c.id: c.name for c in categories}
+
+    summary_income={}
+    summary_expense={}
+
+    for t in transactions:
+        category_name = category_map.get(t.category_id, "Other")
+        
+        if t.transaction_type == 'income':
+            summary_income.setdefault(category_name, {"category": category_name, "amount": 0, 'totaltransaction': 0})
+            summary_income[category_name]["amount"] += t.amount
+            summary_income[category_name]["totaltransaction"] += 1
+        else:
+            summary_expense.setdefault(category_name, {"category": category_name, "amount": 0, 'totaltransaction': 0})
+            summary_expense[category_name]["amount"] += t.amount
+            summary_expense[category_name]["totaltransaction"] += 1
+    
+   
+    top4_income = top_n_and_other_category(summary_income)
+    top4_expense = top_n_and_other_category(summary_expense)
+    print(top4_expense)
+    
+
+    return top4_income, top4_expense
