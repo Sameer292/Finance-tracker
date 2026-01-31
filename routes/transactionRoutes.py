@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from schemas.schemas import Transaction
 from db import models
 from db.database import get_db
 from fastapi.security import HTTPBearer
 from typing import Optional
 from datetime import datetime, timedelta
-from schemas.schemas import (
+from schemas.TransactionSchemas import (
+    Transaction,
     FilteredTransactionResponse,
     RecentTransactionsResponse,
     SingleTransactionResponse,

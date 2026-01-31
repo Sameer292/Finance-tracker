@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import authRoutes, transactions, categoryRoutes
+from routes import authRoutes, transactionRoutes, categoryRoutes
 from db.database import engine
 import db.models as models
 from fastapi.security import HTTPBearer
@@ -34,5 +34,5 @@ def root():
 
 
 app.include_router(authRoutes.router, tags=["Auth"])
-app.include_router(transactions.router, tags=["Transactions"])
+app.include_router(transactionRoutes.router, tags=["Transactions"])
 app.include_router(categoryRoutes.router, tags=["Categories"])

@@ -2,13 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from db.database import get_db
-from schemas.schemas import Category, AllCategories
 from db import models
-from schemas.schemas import (
+from schemas.categorySchemas import (
+    Category,
+    AllCategories,
     CategoryTransactionResponse,
     CategoryResponse,
     AddCategoryResponse,
-    DeleteAllCategoriesResponse
+    DeleteAllCategoriesResponse,
 )
 from middlewares.authMiddleWare import get_current_user
 
@@ -93,7 +94,11 @@ def add_category(
     return {"id": new_category.id, "message": "New category added"}
 
 
-@router.delete("/category/{id}", response_model=DeleteAllCategoriesResponse, status_code=status.HTTP_200_OK)
+@router.delete(
+    "/category/{id}",
+    response_model=DeleteAllCategoriesResponse,
+    status_code=status.HTTP_200_OK,
+)
 def deleteCategory(
     id: int,
     db: Session = Depends(get_db),

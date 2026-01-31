@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, Body
 from db.database import get_db
 from db import models
 from sqlalchemy.orm import Session
-from schemas.schemas import (
+from schemas.authSchemas import (
     CreateUser,
     Login,
     UserResponse,
@@ -14,7 +14,7 @@ from schemas.schemas import (
     ChangePassword,
     UpdateProfile,
     RegisterResponse,
-    userUpdateResponse
+    userUpdateResponse,
 )
 from fastapi.security import HTTPBearer
 from utils.utils import create_access_token, decode_token
@@ -145,7 +145,9 @@ def change_password(
     return {"message": "Password changed successfully", "accessToken": accessToken}
 
 
-@router.patch("/update-profile", response_model=userUpdateResponse, status_code=status.HTTP_200_OK)
+@router.patch(
+    "/update-profile", response_model=userUpdateResponse, status_code=status.HTTP_200_OK
+)
 def update_profile(
     update_data: UpdateProfile,
     db: Session = Depends(get_db),
