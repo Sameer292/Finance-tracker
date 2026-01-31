@@ -132,13 +132,8 @@ class RegisterResponse(BaseModel):
 
 class RefreshResponse(BaseModel):
     user_id: int
-    refresh_token: str
-
+    access_token: str
 
 class ChangePasswordResponse(BaseModel):
     user_id: int
     message: str
-
-class AccessTokenResponse(BaseModel):
-    id: int
-    access_token: str
