@@ -142,3 +142,23 @@ def change_password(
     accessToken = create_access_token(user_id=currentUser.id)
 
     return {"message": "Password changed successfully", "accessToken": accessToken}
+
+
+@router.patch("/update-profile", status_code=status.HTTP_200_OK)
+def update_profile(
+    update_data: UpdateProfile,
+    db: Session = Depends(get_db),
+    currentUser: models.User = Depends(get_current_user),
+):
+    user = db.query(models.User).filter(models.User.id == currentUser.id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if update_data.name:
+        user.name = update_data.name
+
+    if update_data.email:
+        user.email = update_data.email
+
+    db.commit()
+
+    return {"message": "Profile updated successfully", "userId": user.id}
