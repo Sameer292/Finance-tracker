@@ -31,6 +31,10 @@ class RecentTransactionsResponse(BaseModel):
     transactions: List[TransactionResponse]
 
 
+class SingleTransactionResponse(BaseModel):
+    transaction: TransactionResponse
+
+
 class TransactionType(str, Enum):
     INCOME = "income"
     EXPENSE = "expense"
@@ -117,6 +121,19 @@ class UpdateProfile(BaseModel):
     email: Optional[str] = None
 
 
-class AccessTokenResponse(BaseModel):
-    id: int
+class LoginResponse(BaseModel):
+    user_id: int
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+
+class RegisterResponse(BaseModel):
+    user_id: int
+    message: str
+
+class RefreshResponse(BaseModel):
+    user_id: int
     access_token: str
+
+class ChangePasswordResponse(BaseModel):
+    user_id: int
+    message: str

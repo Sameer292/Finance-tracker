@@ -2,26 +2,36 @@ from fastapi import FastAPI
 from routes import authRoutes, transactions, categoryRoutes
 from db.database import engine
 import db.models as models
-from middlewares.authMiddleWare import AuthMiddleware
 from fastapi.security import HTTPBearer
+from contextlib import asynccontextmanager
 
-app = FastAPI(
-    title="Your API",
-    description="This is my API",
-    version="1.0.0",
-    swagger_ui_parameters={"persistAuthorization": True},
-)
-
-app.add_middleware(AuthMiddleware)
 auth_scheme = HTTPBearer()
 
-@app.on_event("startup")
-async def startup():
-    models.Base.metadata.create_all(bind=engine)
 
-@app.get("/")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    models.Base.metadata.create_all(bind=engine)
+    yield
+
+
+app = FastAPI(
+    title="Expensia",
+    description="This is the finance tracker API for my Expensia app",
+    version="1.0.2",
+    swagger_ui_parameters={"persistAuthorization": True},
+    lifespan=lifespan,
+    contact={
+        "name": "Sameer paudel",
+        "url": "http://github.com/sameer292",
+        "email": "paudelsameer888@gmail.com",
+    },
+)
+
+
+@app.get("/", tags=["Root"])
 def root():
     return {"message": "Working"}
+
 
 app.include_router(authRoutes.router, tags=["Auth"])
 app.include_router(transactions.router, tags=["Transactions"])
