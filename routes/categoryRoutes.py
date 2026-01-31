@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from db.database import get_db
 from db import models
@@ -14,18 +13,13 @@ from schemas.categorySchemas import (
 from middlewares.authMiddleWare import get_current_user
 
 router = APIRouter()
-security = HTTPBearer()
-
 
 @router.get("/categories", response_model=AllCategories, status_code=status.HTTP_200_OK)
 def get_categories(
     db: Session = Depends(get_db),
     currentUser: models.User = Depends(get_current_user),
 ):
-    user_id = currentUser.id
-    categories = (
-        db.query(models.Category).filter(models.Category.user_id == user_id).all()
-    )
+    categories = db.query(models.Category).filter(models.Category.user_id == currentUser.id).all()
     return {"categories": categories}
 
 
@@ -39,34 +33,33 @@ def category_transactions(
     db: Session = Depends(get_db),
     currentUser: models.User = Depends(get_current_user),
 ):
-    category = (
-        db.query(models.Category)
-        .filter(models.User.id == currentUser.id, models.Category.id == id)
-        .first()
-    )
+    category = db.query(models.Category).filter(
+        models.Category.id == id,
+        models.Category.user_id == currentUser.id
+    ).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    transactions = (
-        db.query(models.Transaction)
-        .filter(models.User.id == currentUser.id, models.Transaction.category_id == id)
-        .all()
-    )
+
+    transactions = db.query(models.Transaction).filter(
+        models.Transaction.category_id == id,
+        models.Transaction.user_id == currentUser.id
+    ).all()
+
     return {"category_id": category.id, "transactions": transactions}
 
 
 @router.get(
     "/category/{id}", response_model=CategoryResponse, status_code=status.HTTP_200_OK
 )
-def getCategory(
+def get_category(
     id: int,
     db: Session = Depends(get_db),
     currentUser: models.User = Depends(get_current_user),
 ):
-    category = (
-        db.query(models.Category)
-        .filter(models.User.id == currentUser.id, models.Category.id == id)
-        .first()
-    )
+    category = db.query(models.Category).filter(
+        models.Category.id == id,
+        models.Category.user_id == currentUser.id
+    ).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     return category
@@ -82,6 +75,13 @@ def add_category(
     db: Session = Depends(get_db),
     currentUser: models.User = Depends(get_current_user),
 ):
+    existing = db.query(models.Category).filter(
+        models.Category.user_id == currentUser.id,
+        models.Category.name == category.name
+    ).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Category name already exists")
+
     new_category = models.Category(
         name=category.name,
         user_id=currentUser.id,
@@ -99,22 +99,19 @@ def add_category(
     response_model=DeleteAllCategoriesResponse,
     status_code=status.HTTP_200_OK,
 )
-def deleteCategory(
+def delete_category(
     id: int,
     db: Session = Depends(get_db),
     currentUser: models.User = Depends(get_current_user),
 ):
-    category_to_delete = (
-        db.query(models.Category)
-        .filter(models.user.id == currentUser.id, models.Category.id == id)
-        .first()
-    )
+    category_to_delete = db.query(models.Category).filter(
+        models.Category.id == id,
+        models.Category.user_id == currentUser.id
+    ).first()
 
     if not category_to_delete:
         raise HTTPException(status_code=404, detail="Category not found")
 
     db.delete(category_to_delete)
     db.commit()
-    return {
-        "message": "Category deleted successfully",
-    }
+    return {"message": "Category deleted successfully"}

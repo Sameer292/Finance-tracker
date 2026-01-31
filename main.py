@@ -2,11 +2,7 @@ from fastapi import FastAPI
 from routes import authRoutes, transactionRoutes, categoryRoutes
 from db.database import engine
 import db.models as models
-from fastapi.security import HTTPBearer
 from contextlib import asynccontextmanager
-
-auth_scheme = HTTPBearer()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

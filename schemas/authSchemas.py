@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 
@@ -21,9 +21,10 @@ class UserResponse(BaseModel):
     total_transactions: int
     total_expenses: float
     total_income: float
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
+    # class Config:
+    #     from_attributes = True
 
 
 class AllUsers(BaseModel):

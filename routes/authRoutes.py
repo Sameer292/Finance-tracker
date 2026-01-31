@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, Body
 from db.database import get_db
 from db import models
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from schemas.authSchemas import (
     CreateUser,
     Login,
@@ -16,7 +17,6 @@ from schemas.authSchemas import (
     RegisterResponse,
     userUpdateResponse,
 )
-from fastapi.security import HTTPBearer
 from utils.utils import create_access_token, decode_token
 from datetime import timedelta
 from utils import utils
@@ -25,7 +25,6 @@ from middlewares.authMiddleWare import get_current_user
 from email_validator import validate_email, EmailNotValidError
 
 router = APIRouter()
-security = HTTPBearer()
 
 
 @router.get("/me", response_model=UserResponse, status_code=status.HTTP_200_OK)
@@ -55,9 +54,13 @@ def register(credentials: CreateUser = Body(...), db: Session = Depends(get_db))
     hashed_password = utils.hash_password(credentials.password)
     new_user = models.User(name=credentials.name, email=email, password=hashed_password)
     db.add(new_user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Email already exists")
     db.refresh(new_user)
-    return {"id": new_user.id, "message": "User created successfully"}
+    return {"user_id": new_user.id, "message": "User created successfully"}
 
 
 @router.post("/login", response_model=LoginResponse, status_code=status.HTTP_200_OK)
@@ -119,13 +122,13 @@ def seed_me(db: Session = Depends(get_db)):
     db.refresh(new_user)
     access_token = create_access_token(user_id=new_user.id)
     return {
-        "id": new_user.id,
+        "user_id": new_user.id,
         "message": "User created successfully",
-        "accessToken": access_token,
+        "access_token": access_token,
     }
 
 
-@router.put(
+@router.patch(
     "/change-password",
     response_model=ChangePasswordResponse,
     status_code=status.HTTP_200_OK,
@@ -140,9 +143,9 @@ def change_password(
 
     currentUser.password = utils.hash_password(password_data.new_password)
     db.commit()
-    accessToken = create_access_token(user_id=currentUser.id)
+    access_token = create_access_token(user_id=currentUser.id)
 
-    return {"message": "Password changed successfully", "accessToken": accessToken}
+    return {"message": "Password changed successfully", "access_token": access_token}
 
 
 @router.patch(
@@ -153,15 +156,22 @@ def update_profile(
     db: Session = Depends(get_db),
     currentUser: models.User = Depends(get_current_user),
 ):
-    user = db.query(models.User).filter(models.User.id == currentUser.id).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
     if update_data.name:
-        user.name = update_data.name
+        currentUser.name = update_data.name
 
     if update_data.email:
-        user.email = update_data.email
+        try:
+            email = validate_email(
+                update_data.email, check_deliverability=True
+            ).normalized
+            currentUser.email = email
+        except EmailNotValidError:
+            raise HTTPException(400, "Invalid email")
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Email already exists")
 
-    return {"user_id": user.id, "message": "Profile updated successfully"}
+    return {"user_id": currentUser.id, "message": "Profile updated successfully"}

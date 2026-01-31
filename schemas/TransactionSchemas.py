@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, ConfigDict
 from enum import Enum
 from datetime import date, datetime
 from typing import List, Optional
@@ -28,9 +28,8 @@ class Transaction(BaseModel):
 
 
 class PostTransactionResponse(BaseModel):
-    id: int
-    message: str
-    userStatus: str
+    transaction_id: int
+    current_balance: int
 
 
 class UpdateTransactionResponse(BaseModel):
@@ -56,9 +55,7 @@ class TransactionResponse(BaseModel):
     updated_date: datetime
     category_id: Optional[int] = None
     transaction_date: Optional[datetime] = None
-
-    class Config:
-        from_attribute = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FilteredTransactionResponse(BaseModel):
