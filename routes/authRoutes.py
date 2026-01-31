@@ -14,6 +14,7 @@ from schemas.schemas import (
     ChangePassword,
     UpdateProfile,
     RegisterResponse,
+    userUpdateResponse
 )
 from fastapi.security import HTTPBearer
 from utils.utils import create_access_token, decode_token
@@ -144,7 +145,7 @@ def change_password(
     return {"message": "Password changed successfully", "accessToken": accessToken}
 
 
-@router.patch("/update-profile", status_code=status.HTTP_200_OK)
+@router.patch("/update-profile", response_model=userUpdateResponse, status_code=status.HTTP_200_OK)
 def update_profile(
     update_data: UpdateProfile,
     db: Session = Depends(get_db),
@@ -152,7 +153,7 @@ def update_profile(
 ):
     user = db.query(models.User).filter(models.User.id == currentUser.id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=401, detail="User not found")
     if update_data.name:
         user.name = update_data.name
 
@@ -161,4 +162,4 @@ def update_profile(
 
     db.commit()
 
-    return {"message": "Profile updated successfully", "userId": user.id}
+    return {"user_id": user.id, "message": "Profile updated successfully"}

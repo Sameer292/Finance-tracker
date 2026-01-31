@@ -120,6 +120,9 @@ class UpdateProfile(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
 
+class userUpdateResponse(BaseModel):
+    user_id: int
+    message: str
 
 class LoginResponse(BaseModel):
     user_id: int
