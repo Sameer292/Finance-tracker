@@ -119,8 +119,15 @@ class AllCategories(BaseModel):
 
 
 class CategoryTransactionResponse(BaseModel):
+    category_id: int
     transactions: list[Transaction]
 
+class AddCategoryResponse(BaseModel):
+    id: int
+    message: str
+
+class DeleteAllCategoriesResponse(BaseModel):
+    message: str
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str

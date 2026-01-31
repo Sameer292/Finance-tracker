@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from schemas.schemas import Category, AllCategories
 from db import models
-from schemas.schemas import CategoryTransactionResponse
+from schemas.schemas import (
+    CategoryTransactionResponse,
+    CategoryResponse,
+    AddCategoryResponse,
+    DeleteAllCategoriesResponse
+)
 from middlewares.authMiddleWare import get_current_user
 
 router = APIRouter()
@@ -20,9 +25,6 @@ def get_categories(
     categories = (
         db.query(models.Category).filter(models.Category.user_id == user_id).all()
     )
-    if not categories:
-        raise HTTPException(status_code=404, detail="Categories not found")
-
     return {"categories": categories}
 
 
@@ -48,10 +50,12 @@ def category_transactions(
         .filter(models.User.id == currentUser.id, models.Transaction.category_id == id)
         .all()
     )
-    return {"transactions": transactions}
+    return {"category_id": category.id, "transactions": transactions}
 
 
-@router.get("/category/{id}", status_code=status.HTTP_200_OK)
+@router.get(
+    "/category/{id}", response_model=CategoryResponse, status_code=status.HTTP_200_OK
+)
 def getCategory(
     id: int,
     db: Session = Depends(get_db),
@@ -59,7 +63,7 @@ def getCategory(
 ):
     category = (
         db.query(models.Category)
-        .filter(models.user.id == currentUser.id, models.Category.id == id)
+        .filter(models.User.id == currentUser.id, models.Category.id == id)
         .first()
     )
     if not category:
@@ -67,7 +71,11 @@ def getCategory(
     return category
 
 
-@router.post("/categories")
+@router.post(
+    "/categories",
+    response_model=AddCategoryResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def add_category(
     category: Category,
     db: Session = Depends(get_db),
@@ -85,7 +93,7 @@ def add_category(
     return {"id": new_category.id, "message": "New category added"}
 
 
-@router.delete("/category/{id}", status_code=status.HTTP_200_OK)
+@router.delete("/category/{id}", response_model=DeleteAllCategoriesResponse, status_code=status.HTTP_200_OK)
 def deleteCategory(
     id: int,
     db: Session = Depends(get_db),
