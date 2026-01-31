@@ -1,42 +1,33 @@
-from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import Depends, HTTPException
 from db import models
 from sqlalchemy.orm import Session
-from starlette.middleware.base import BaseHTTPMiddleware
 from db.database import get_db
 from utils.utils import decode_token
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security = HTTPBearer()
 
 
-def get_user_from_token(token: str, db: Session):
+def get_user_from_token(token: str, db: Session) -> models.User | None:
     try:
         payload = decode_token(token)
         user_id = int(payload.get("sub"))
         if not user_id:
             return None
-    except HTTPException:
-        return None
-    try:
         user = db.query(models.User).filter(models.User.id == user_id).first()
         return user
     except Exception:
         return None
 
 
-class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        db = next(get_db())
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-            user = get_user_from_token(token, db)
-            if user:
-                request.state.user = user
-            else:
-                return JSONResponse({"detail": "Invalid token"}, status_code=401)
-        else:
-            request.state.user = None
-        try:
-            response = await call_next(request)
-            return response
-        finally:
-            db.close()
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+) -> models.User:
+    token = credentials.credentials
+    user = get_user_from_token(token, db)
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    return user
