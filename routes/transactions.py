@@ -10,6 +10,10 @@ from schemas.schemas import (
     FilteredTransactionResponse,
     RecentTransactionsResponse,
     SingleTransactionResponse,
+    PostTransactionResponse,
+    UpdateTransactionResponse,
+    DeleteTransactionResponse,
+    DeleteAllTransactionsResponse,
 )
 from utils import utils
 from middlewares.authMiddleWare import get_current_user
@@ -119,7 +123,11 @@ def get_transaction(
     return {"transaction": transaction}
 
 
-@router.post("/transactions")
+@router.post(
+    "/transactions",
+    response_model=PostTransactionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def post_transactions(
     transaction: Transaction,
     db: Session = Depends(get_db),
@@ -165,7 +173,11 @@ def post_transactions(
     }
 
 
-@router.put("/transactions/{id}")
+@router.put(
+    "/transactions/{id}",
+    response_model=UpdateTransactionResponse,
+    status_code=status.HTTP_200_OK,
+)
 def update_transaction(
     id: int,
     transaction: Transaction,
@@ -200,10 +212,14 @@ def update_transaction(
         currentUser.total_income += amount_delta
         currentUser.current_balance += amount_delta
     db.commit()
-    return {"message": "Transaction updated"}
+    return {"transaction_id": queried_transaction.id, "message": "Transaction updated"}
 
 
-@router.delete("/transactions/{id}")
+@router.delete(
+    "/transactions/{id}",
+    response_model=DeleteTransactionResponse,
+    status_code=status.HTTP_200_OK,
+)
 def delete_transaction(
     id: int,
     db: Session = Depends(get_db),
@@ -222,10 +238,14 @@ def delete_transaction(
         currentUser.current_balance -= transaction.amount
     db.delete(transaction)
     db.commit()
-    return {"message": "Transaction deleted"}
+    return {"deleted_transaction_id": transaction.id, "message": "Transaction deleted"}
 
 
-@router.delete("/transactions")
+@router.delete(
+    "/transactions",
+    response_model=DeleteAllTransactionsResponse,
+    status_code=status.HTTP_200_OK,
+)
 def delete_all_transactions(
     db: Session = Depends(get_db),
     currentUser: models.User = Depends(get_current_user),

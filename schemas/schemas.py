@@ -67,7 +67,22 @@ class Transaction(BaseModel):
             # handle string just in case
             return datetime.strptime(v, "%Y-%m-%d")
         return v
+    
+class PostTransactionResponse(BaseModel):
+    id: int
+    message: str
+    userStatus: str
 
+class UpdateTransactionResponse(BaseModel):
+    transaction_id: int
+    message: str
+
+class DeleteTransactionResponse(BaseModel):
+    deleted_transaction_id: int
+    message: str
+
+class DeleteAllTransactionsResponse(BaseModel):
+    message: str
 
 class UserResponse(BaseModel):
     id: int
