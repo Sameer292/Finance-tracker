@@ -3,6 +3,7 @@ from enum import Enum
 from datetime import date, datetime
 from typing import List, Optional
 
+
 class TransactionResponse(BaseModel):
     id: int
     transaction_type: str
@@ -14,18 +15,20 @@ class TransactionResponse(BaseModel):
     transaction_date: Optional[datetime] = None
 
     class Config:
-      from_attribute = True
-        
+        from_attribute = True
+
+
 class FilteredTransactionResponse(BaseModel):
-    start_date:Optional[date] =None
-    end_date:Optional[date] =None
-    start_date_ms:Optional[int] =None
-    end_date_ms:Optional[int] =None
-    transactions:List[TransactionResponse]
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    start_date_ms: Optional[int] = None
+    end_date_ms: Optional[int] = None
+    transactions: List[TransactionResponse]
+
 
 class RecentTransactionsResponse(BaseModel):
     message: str
-    transactions: List[TransactionResponse]       
+    transactions: List[TransactionResponse]
 
 
 class TransactionType(str, Enum):
@@ -107,6 +110,11 @@ class RefreshTokenRequest(BaseModel):
 class ChangePassword(BaseModel):
     current_password: str
     new_password: str
+
+
+class UpdateProfile(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
 
 
 class AccessTokenResponse(BaseModel):

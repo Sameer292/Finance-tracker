@@ -10,6 +10,7 @@ from schemas.schemas import (
     RefreshTokenRequest,
     AccessTokenResponse,
     ChangePassword,
+    UpdateProfile,
 )
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from utils.utils import create_access_token, decode_token
@@ -109,10 +110,28 @@ def change_password(
     db.commit()
     accessToken = create_access_token(user_id=user.id)
 
-    return {
-        "message": "Password changed successfully", 
-        "accessToken": accessToken
-        }
+    return {"message": "Password changed successfully", "accessToken": accessToken}
+
+
+@router.patch("/update-profile", status_code=status.HTTP_200_OK)
+def update_profile(
+    request: Request,
+    update_data: UpdateProfile,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+):
+    user = db.query(models.User).filter(models.User.id == request.state.user.id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if update_data.name:
+        user.name = update_data.name
+
+    if update_data.email:
+        user.email = update_data.email
+
+    db.commit()
+
+    return {"message": "Profile updated successfully", "userId": user.id}
 
 
 @router.get("/users", response_model=AllUsers, status_code=status.HTTP_200_OK)
