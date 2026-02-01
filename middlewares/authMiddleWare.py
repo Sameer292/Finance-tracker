@@ -26,7 +26,6 @@ def get_current_user(
 ) -> models.User:
     token = credentials.credentials
     user = get_user_from_token(token, db)
-
     if not user:
         raise HTTPException(status_code=401, detail="Invalid token")
 

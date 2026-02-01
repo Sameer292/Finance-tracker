@@ -1,22 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from schemas.schemas import Transaction
 from db import models
 from db.database import get_db
-from fastapi.security import HTTPBearer
 from typing import Optional
 from datetime import datetime, timedelta
-from schemas.schemas import (
+from schemas.TransactionSchemas import (
+    Transaction,
     FilteredTransactionResponse,
     RecentTransactionsResponse,
     SingleTransactionResponse,
+    PostTransactionResponse,
+    UpdateTransactionResponse,
+    DeleteTransactionResponse,
+    DeleteAllTransactionsResponse,
 )
 from utils import utils
 from middlewares.authMiddleWare import get_current_user
 
 
 router = APIRouter()
-security = HTTPBearer()
 
 
 @router.get(
@@ -51,14 +53,14 @@ def get_transactions(
 
     if start_date:
         start_date = start_date.replace(hour=0, minute=0, second=0)
-        query = query.filter(models.Transaction.created_date >= start_date)
+        query = query.filter(models.Transaction.transaction_date >= start_date)
 
     if end_date:
         end_date = end_date.replace(hour=0, minute=0, second=0)
         end_date += timedelta(days=1)
-        query = query.filter(models.Transaction.created_date < end_date)
+        query = query.filter(models.Transaction.transaction_date < end_date)
 
-    transactions = query.order_by(models.Transaction.created_date.desc()).all()
+    transactions = query.order_by(models.Transaction.transaction_date.desc()).all()
 
     if start_date_ms is None and end_date_ms is None:
         return {"transactions": transactions}
@@ -85,9 +87,9 @@ def get_recent_transactions(
         db.query(models.Transaction)
         .filter(
             models.Transaction.user_id == user_id,
-            models.Transaction.created_date >= start_date,
+            models.Transaction.transaction_date >= start_date,
         )
-        .order_by(models.Transaction.created_date.desc())
+        .order_by(models.Transaction.transaction_date.desc())
         .all()
     )
     if not transactions:
@@ -111,7 +113,7 @@ def get_transaction(
     user_id = currentUser.id
     transaction = (
         db.query(models.Transaction)
-        .filter(models.User.id == user_id, models.Transaction.id == id)
+        .filter(models.Transaction.id == id, models.Transaction.user_id == user_id)
         .first()
     )
     if not transaction:
@@ -119,7 +121,11 @@ def get_transaction(
     return {"transaction": transaction}
 
 
-@router.post("/transactions")
+@router.post(
+    "/transactions",
+    response_model=PostTransactionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def post_transactions(
     transaction: Transaction,
     db: Session = Depends(get_db),
@@ -149,23 +155,25 @@ def post_transactions(
 
     db.add(new_transaction)
     currentUser.total_transactions += 1
-    if transaction.transaction_type == "expense":
-        currentUser.total_expenses += transaction.amount
-        currentUser.current_balance -= transaction.amount
-    else:
-        currentUser.total_income += transaction.amount
-        currentUser.current_balance += transaction.amount
-    db.commit()
+    utils.adjust_user_balance(currentUser, old_txn=None, new_txn=transaction)
+    try:
+        db.commit()
+    except:
+        db.rollback()
+        raise
     db.refresh(new_transaction)
     db.refresh(currentUser)
     return {
-        "id": new_transaction.id,
-        "message": "New transaction added",
-        "userStatus": "new balance: " + str(currentUser.current_balance),
+        "transaction_id": new_transaction.id,
+        "current_balance": currentUser.current_balance,
     }
 
 
-@router.put("/transactions/{id}")
+@router.put(
+    "/transactions/{id}",
+    response_model=UpdateTransactionResponse,
+    status_code=status.HTTP_200_OK,
+)
 def update_transaction(
     id: int,
     transaction: Transaction,
@@ -173,12 +181,18 @@ def update_transaction(
     currentUser: models.User = Depends(get_current_user),
 ):
     queried_transaction = (
-        db.query(models.Transaction).filter(models.Transaction.id == id).first()
+        db.query(models.Transaction)
+        .filter(
+            models.Transaction.id == id,
+            models.Transaction.user_id == currentUser.id,
+        )
+        .first()
     )
-    if not transaction:
+
+    if not queried_transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    amount_delta = transaction.amount - queried_transaction.amount
+    # Validate category ownership
     if transaction.category_id is not None:
         category = (
             db.query(models.Category)
@@ -191,48 +205,78 @@ def update_transaction(
         if not category:
             raise HTTPException(status_code=404, detail="Category not found")
         queried_transaction.category_id = transaction.category_id
+
+    utils.adjust_user_balance(
+        currentUser, old_txn=queried_transaction, new_txn=transaction
+    )
+
+    queried_transaction.amount = transaction.amount
+    queried_transaction.transaction_type = transaction.transaction_type
     queried_transaction.note = transaction.note
     queried_transaction.transaction_date = transaction.transaction_date
-    if transaction.transaction_type == "expense":
-        currentUser.total_expenses += amount_delta
-        currentUser.current_balance -= amount_delta
-    else:
-        currentUser.total_income += amount_delta
-        currentUser.current_balance += amount_delta
-    db.commit()
-    return {"message": "Transaction updated"}
+
+    try:
+        db.commit()
+    except:
+        db.rollback()
+        raise
+
+    return {
+        "transaction_id": queried_transaction.id,
+        "message": "Transaction updated successfully",
+        "current_balance": currentUser.current_balance,
+    }
 
 
-@router.delete("/transactions/{id}")
+@router.delete(
+    "/transactions/{id}",
+    response_model=DeleteTransactionResponse,
+    status_code=status.HTTP_200_OK,
+)
 def delete_transaction(
     id: int,
     db: Session = Depends(get_db),
     currentUser: models.User = Depends(get_current_user),
 ):
     transaction = (
-        db.query(models.Transaction).filter(models.Transaction.id == id).first()
+        db.query(models.Transaction)
+        .filter(
+            models.Transaction.id == id, models.Transaction.user_id == currentUser.id
+        )
+        .first()
     )
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    if transaction.transaction_type == "expense":
-        currentUser.total_expenses -= transaction.amount
-        currentUser.current_balance += transaction.amount
-    else:
-        currentUser.total_income -= transaction.amount
-        currentUser.current_balance -= transaction.amount
+    utils.adjust_user_balance(currentUser, old_txn=transaction, new_txn=None)
     db.delete(transaction)
-    db.commit()
-    return {"message": "Transaction deleted"}
+    currentUser.total_transactions -= 1
+    try:
+        db.commit()
+    except:
+        db.rollback()
+        raise
+    return {"deleted_transaction_id": transaction.id, "message": "Transaction deleted"}
 
 
-@router.delete("/transactions")
+@router.delete(
+    "/transactions",
+    response_model=DeleteAllTransactionsResponse,
+    status_code=status.HTTP_200_OK,
+)
 def delete_all_transactions(
     db: Session = Depends(get_db),
     currentUser: models.User = Depends(get_current_user),
 ):
-    db.query(models.Transaction).delete()
+    db.query(models.Transaction).filter(
+        models.Transaction.user_id == currentUser.id
+    ).delete()
     currentUser.current_balance = 0
     currentUser.total_expenses = 0
     currentUser.total_income = 0
-    db.commit()
+    currentUser.total_transactions = 0
+    try:
+        db.commit()
+    except:
+        db.rollback()
+        raise
     return {"message": "All transactions deleted"}
