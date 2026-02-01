@@ -20,12 +20,16 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    current_balance = Column(Numeric(10,2), default=0)
-    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
-    categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")
+    current_balance = Column(Numeric(10, 2), default=0)
+    transactions = relationship(
+        "Transaction", back_populates="user", cascade="all, delete-orphan"
+    )
+    categories = relationship(
+        "Category", back_populates="user", cascade="all, delete-orphan"
+    )
     total_transactions = Column(Integer, default=0)
-    total_expenses = Column(Numeric(10,2), default=0)
-    total_income = Column(Numeric(10,2), default=0)
+    total_expenses = Column(Numeric(10, 2), default=0)
+    total_income = Column(Numeric(10, 2), default=0)
 
 
 class Transaction(Base):
@@ -35,7 +39,7 @@ class Transaction(Base):
     transaction_type = Column(
         Enum(TransactionType, name="transaction_type_enum"), nullable=False
     )
-    amount = Column(Numeric(10,2), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
     note = Column(String, nullable=True)
     transaction_date = Column(
         DateTime, nullable=False, default=datetime.datetime.utcnow

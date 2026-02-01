@@ -55,10 +55,12 @@ def register(credentials: CreateUser = Body(...), db: Session = Depends(get_db))
     new_user = models.User(name=credentials.name, email=email, password=hashed_password)
     db.add(new_user)
     try:
-        db.commit()
-    except IntegrityError:
+        db.flush()
+    except IntegrityError as e:
         db.rollback()
+        print(e)
         raise HTTPException(409, "Email already exists")
+    db.commit()
     db.refresh(new_user)
     return {"user_id": new_user.id, "message": "User created successfully"}
 
