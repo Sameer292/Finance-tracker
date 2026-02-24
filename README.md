@@ -45,7 +45,7 @@ source .venv/bin/activate
 3. Install dependencies:
 
 ```bash
-uv pip install -e .
+uv sync
 ```
 
 4. Configure environment variables:
@@ -65,9 +65,8 @@ DATABASE_URL=sqlite:///./financeTracker.db
 ```
 
 5. Run the server:
-
 ```bash
-uvicorn main:app --reload
+uv run uvicorn main:app --host 0.0.0.0 --port 8000  --reload
 ```
 
 The API will be available at `http://localhost:8000`
