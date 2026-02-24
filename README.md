@@ -31,8 +31,8 @@ A robust RESTful API built with FastAPI for personal finance management. Expensi
 1. Clone the repository:
 
 ```bash
-git clone <repository-url>
-cd FinanceTracker
+git clone https://github.com/Sameer292/Finance-tracker.git
+cd Finance-tracker
 ```
 
 2. Create and activate a virtual environment:
