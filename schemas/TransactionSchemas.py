@@ -29,7 +29,7 @@ class Transaction(BaseModel):
 
 class PostTransactionResponse(BaseModel):
     transaction_id: int
-    current_balance: int
+    current_balance: float
 
 
 class UpdateTransactionResponse(BaseModel):
